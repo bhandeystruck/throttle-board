@@ -1,0 +1,239 @@
+import { useState } from 'react';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { FlightCard } from '@/components/FlightCard';
+import { StatusBadge } from '@/components/StatusBadge';
+import { mockFlights } from '@/data/mockData';
+import { FlightStatus } from '@/types/flight';
+import { 
+  BarChart3, 
+  Clock, 
+  Users, 
+  CheckCircle, 
+  AlertCircle,
+  Settings
+} from 'lucide-react';
+
+export default function Dashboard() {
+  const [selectedStatus, setSelectedStatus] = useState<FlightStatus | 'all'>('all');
+
+  // Note: This is a preview - full functionality requires Supabase integration
+  const [showAuthNotice, setShowAuthNotice] = useState(true);
+
+  const statusColumns: { status: FlightStatus; label: string }[] = [
+    { status: 'requested', label: 'Requested' },
+    { status: 'queued', label: 'Queued' },
+    { status: 'planning', label: 'Planning' },
+    { status: 'underway', label: 'Underway' },
+    { status: 'edited', label: 'Edited' },
+    { status: 'published', label: 'Published' },
+  ];
+
+  const getFlightsByStatus = (status: FlightStatus) => {
+    return mockFlights.filter(flight => flight.status === status);
+  };
+
+  const getTotalsByStatus = () => {
+    return statusColumns.reduce((acc, col) => {
+      acc[col.status] = getFlightsByStatus(col.status).length;
+      return acc;
+    }, {} as Record<FlightStatus, number>);
+  };
+
+  const totals = getTotalsByStatus();
+
+  if (showAuthNotice) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <Card className="p-8 text-center max-w-2xl mx-auto">
+          <AlertCircle className="w-12 h-12 text-amber-500 mx-auto mb-4" />
+          <h1 className="text-2xl font-semibold mb-4">Admin Dashboard</h1>
+          <p className="text-muted-foreground mb-6">
+            To access the full admin dashboard with authentication, flight management, 
+            and database integration, you'll need to connect this project to Supabase.
+          </p>
+          <div className="space-y-4">
+            <p className="text-sm">
+              The Lovable Supabase integration provides:
+            </p>
+            <ul className="text-sm text-left max-w-md mx-auto space-y-1">
+              <li>• User authentication and role-based access</li>
+              <li>• Real-time database for flight requests</li>
+              <li>• Status management and tracking</li>
+              <li>• Media link attachments</li>
+              <li>• Email notifications</li>
+            </ul>
+            <Button onClick={() => setShowAuthNotice(false)} variant="outline" className="mr-3">
+              Preview Dashboard
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-semibold">Flight Requests Dashboard</h1>
+          <p className="text-muted-foreground">Manage and track all flight requests</p>
+        </div>
+        <Button variant="outline" size="sm">
+          <Settings className="w-4 h-4 mr-2" />
+          Settings
+        </Button>
+      </div>
+
+      {/* Stats Overview */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <Card className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">Total Requests</p>
+              <p className="text-2xl font-semibold">{mockFlights.length}</p>
+            </div>
+            <Users className="w-8 h-8 text-muted-foreground" />
+          </div>
+        </Card>
+        
+        <Card className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">In Progress</p>
+              <p className="text-2xl font-semibold">
+                {totals.planning + totals.underway + totals.edited}
+              </p>
+            </div>
+            <Clock className="w-8 h-8 text-muted-foreground" />
+          </div>
+        </Card>
+        
+        <Card className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">Published</p>
+              <p className="text-2xl font-semibold">{totals.published}</p>
+            </div>
+            <CheckCircle className="w-8 h-8 text-muted-foreground" />
+          </div>
+        </Card>
+        
+        <Card className="p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">Completion Rate</p>
+              <p className="text-2xl font-semibold">
+                {Math.round((totals.published / Math.max(mockFlights.length, 1)) * 100)}%
+              </p>
+            </div>
+            <BarChart3 className="w-8 h-8 text-muted-foreground" />
+          </div>
+        </Card>
+      </div>
+
+      {/* Kanban Board */}
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-semibold">Flight Queue</h2>
+          <div className="text-sm text-muted-foreground">
+            Drag and drop to update status (Preview Mode)
+          </div>
+        </div>
+
+        {/* Status Filter Tabs */}
+        <div className="flex flex-wrap gap-2 border-b">
+          <Button
+            variant={selectedStatus === 'all' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setSelectedStatus('all')}
+          >
+            All ({mockFlights.length})
+          </Button>
+          {statusColumns.map(col => (
+            <Button
+              key={col.status}
+              variant={selectedStatus === col.status ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setSelectedStatus(col.status)}
+            >
+              {col.label} ({totals[col.status]})
+            </Button>
+          ))}
+        </div>
+
+        {/* Flights List/Grid */}
+        <div className="space-y-4">
+          {selectedStatus === 'all' ? (
+            // Show all flights grouped by status
+            statusColumns.map(col => {
+              const flights = getFlightsByStatus(col.status);
+              if (flights.length === 0) return null;
+              
+              return (
+                <div key={col.status}>
+                  <div className="flex items-center gap-3 mb-3">
+                    <StatusBadge status={col.status} />
+                    <span className="text-sm text-muted-foreground">
+                      {flights.length} flight{flights.length !== 1 ? 's' : ''}
+                    </span>
+                  </div>
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {flights.map(flight => (
+                      <FlightCard key={flight.id} flight={flight} />
+                    ))}
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            // Show flights for selected status only
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {getFlightsByStatus(selectedStatus as FlightStatus).map(flight => (
+                <FlightCard key={flight.id} flight={flight} />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Empty State */}
+        {selectedStatus !== 'all' && getFlightsByStatus(selectedStatus as FlightStatus).length === 0 && (
+          <Card className="p-8 text-center">
+            <div className="text-muted-foreground">
+              No flights with "{selectedStatus}" status yet.
+            </div>
+          </Card>
+        )}
+      </div>
+
+      {/* Quick Actions */}
+      <Card className="mt-8 p-6">
+        <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
+        <div className="flex flex-wrap gap-3">
+          <Button variant="outline" size="sm">
+            Export Data
+          </Button>
+          <Button variant="outline" size="sm">
+            Bulk Status Update
+          </Button>
+          <Button variant="outline" size="sm">
+            Send Notifications
+          </Button>
+          <Button variant="outline" size="sm">
+            Analytics Report
+          </Button>
+        </div>
+      </Card>
+
+      {/* Note about Supabase */}
+      <Card className="mt-6 p-4 bg-blue-50 border-blue-200">
+        <p className="text-sm text-blue-700">
+          <strong>Preview Mode:</strong> This dashboard shows mock data. 
+          Connect to Supabase to enable real flight management, authentication, and database functionality.
+        </p>
+      </Card>
+    </div>
+  );
+}

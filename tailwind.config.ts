@@ -13,6 +13,10 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+        mono: ['JetBrains Mono', 'Consolas', 'monospace'],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -22,10 +26,12 @@ export default {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
+          hover: "hsl(var(--primary-hover))",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",
+          hover: "hsl(var(--secondary-hover))",
         },
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
@@ -57,6 +63,29 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        status: {
+          requested: "hsl(var(--status-requested))",
+          queued: "hsl(var(--status-queued))",
+          planning: "hsl(var(--status-planning))",
+          underway: "hsl(var(--status-underway))",
+          edited: "hsl(var(--status-edited))",
+          published: "hsl(var(--status-published))",
+          declined: "hsl(var(--status-declined))",
+          archived: "hsl(var(--status-archived))",
+        },
+      },
+      backgroundImage: {
+        'gradient-sky': 'var(--gradient-sky)',
+        'gradient-runway': 'var(--gradient-runway)',
+        'gradient-control-tower': 'var(--gradient-control-tower)',
+      },
+      boxShadow: {
+        'aircraft': 'var(--shadow-aircraft)',
+        'runway': 'var(--shadow-runway)',
+        'elevation': 'var(--shadow-elevation)',
+      },
+      transitionProperty: {
+        'flight': 'var(--transition-flight)',
       },
       borderRadius: {
         lg: "var(--radius)",
