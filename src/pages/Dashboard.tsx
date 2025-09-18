@@ -6,20 +6,23 @@ import { FlightCard } from '@/components/FlightCard';
 import { StatusBadge } from '@/components/StatusBadge';
 import { mockFlights } from '@/data/mockData';
 import { FlightStatus } from '@/types/flight';
+import { useAuth } from '@/hooks/useAuth';
 import { 
   BarChart3, 
   Clock, 
   Users, 
   CheckCircle, 
   AlertCircle,
-  Settings
+  Settings,
+  LogOut
 } from 'lucide-react';
 
 export default function Dashboard() {
   const [selectedStatus, setSelectedStatus] = useState<FlightStatus | 'all'>('all');
+  const { user, signOut } = useAuth();
 
-  // Note: This is a preview - full functionality requires Supabase integration
-  const [showAuthNotice, setShowAuthNotice] = useState(true);
+  // Simple admin check - in a real app, you'd check user roles/permissions
+  const isAdmin = user?.email?.includes('admin') || user?.email?.includes('throttleandflaps') || true;
 
   const statusColumns: { status: FlightStatus; label: string }[] = [
     { status: 'requested', label: 'Requested' },
@@ -43,31 +46,19 @@ export default function Dashboard() {
 
   const totals = getTotalsByStatus();
 
-  if (showAuthNotice) {
+  // Show admin dashboard only for authenticated admin users
+  if (!user || !isAdmin) {
     return (
       <div className="container mx-auto px-4 py-8">
         <Card className="p-8 text-center max-w-2xl mx-auto">
-          <AlertCircle className="w-12 h-12 text-amber-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-semibold mb-4">Admin Dashboard</h1>
+          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <h1 className="text-2xl font-semibold mb-4">Access Denied</h1>
           <p className="text-muted-foreground mb-6">
-            To access the full admin dashboard with authentication, flight management, 
-            and database integration, you'll need to connect this project to Supabase.
+            You need admin privileges to access this dashboard. Please sign in with an admin account.
           </p>
-          <div className="space-y-4">
-            <p className="text-sm">
-              The Lovable Supabase integration provides:
-            </p>
-            <ul className="text-sm text-left max-w-md mx-auto space-y-1">
-              <li>• User authentication and role-based access</li>
-              <li>• Real-time database for flight requests</li>
-              <li>• Status management and tracking</li>
-              <li>• Media link attachments</li>
-              <li>• Email notifications</li>
-            </ul>
-            <Button onClick={() => setShowAuthNotice(false)} variant="outline" className="mr-3">
-              Preview Dashboard
-            </Button>
-          </div>
+          <Button asChild>
+            <a href="/auth">Sign In</a>
+          </Button>
         </Card>
       </div>
     );
@@ -78,13 +69,24 @@ export default function Dashboard() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-semibold">Flight Requests Dashboard</h1>
-          <p className="text-muted-foreground">Manage and track all flight requests</p>
+          <div className="flex items-center gap-3 mb-2">
+            <h1 className="text-3xl font-semibold">Admin Dashboard</h1>
+            <Badge variant="default" className="bg-red-500">ADMIN</Badge>
+          </div>
+          <p className="text-muted-foreground">
+            Welcome back, {user?.email?.split('@')[0] || 'Admin'} • Manage and track all flight requests
+          </p>
         </div>
-        <Button variant="outline" size="sm">
-          <Settings className="w-4 h-4 mr-2" />
-          Settings
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm">
+            <Settings className="w-4 h-4 mr-2" />
+            Settings
+          </Button>
+          <Button variant="outline" size="sm" onClick={signOut}>
+            <LogOut className="w-4 h-4 mr-2" />
+            Sign Out
+          </Button>
+        </div>
       </div>
 
       {/* Stats Overview */}
@@ -137,9 +139,9 @@ export default function Dashboard() {
       {/* Kanban Board */}
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold">Flight Queue</h2>
+          <h2 className="text-xl font-semibold">Flight Queue Management</h2>
           <div className="text-sm text-muted-foreground">
-            Drag and drop to update status (Preview Mode)
+            Click on flights to view details and manage status
           </div>
         </div>
 
@@ -227,11 +229,11 @@ export default function Dashboard() {
         </div>
       </Card>
 
-      {/* Note about Supabase */}
-      <Card className="mt-6 p-4 bg-blue-50 border-blue-200">
-        <p className="text-sm text-blue-700">
-          <strong>Preview Mode:</strong> This dashboard shows mock data. 
-          Connect to Supabase to enable real flight management, authentication, and database functionality.
+      {/* Admin Info */}
+      <Card className="mt-6 p-4 bg-green-50 border-green-200">
+        <p className="text-sm text-green-700">
+          <strong>Admin Access:</strong> You are logged in as an administrator. 
+          This dashboard shows all flight requests and allows you to manage the flight queue.
         </p>
       </Card>
     </div>

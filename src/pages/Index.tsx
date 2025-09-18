@@ -5,10 +5,12 @@ import { FlightCard } from '@/components/FlightCard';
 import { FilterBar } from '@/components/FilterBar';
 import { mockFlights } from '@/data/mockData';
 import { FilterOptions } from '@/types/flight';
-import { Plane, PlusCircle } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { Plane, PlusCircle, LogIn } from 'lucide-react';
 
 const Index = () => {
   const [filters, setFilters] = useState<FilterOptions>({ sortBy: 'newest' });
+  const { user } = useAuth();
 
   const filteredFlights = useMemo(() => {
     let filtered = [...mockFlights].filter(flight => flight.visibility === 'public');
@@ -83,6 +85,14 @@ const Index = () => {
                   How It Works
                 </Link>
               </Button>
+              {!user && (
+                <Button asChild variant="secondary" size="lg">
+                  <Link to="/auth" className="flex items-center gap-2">
+                    <LogIn className="w-5 h-5" />
+                    Sign In
+                  </Link>
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -150,12 +160,22 @@ const Index = () => {
             Join the community and see your favorite routes brought to life in Microsoft Flight Simulator 2024.
             From challenging approaches to scenic routes, every flight tells a story.
           </p>
-          <Button asChild size="lg">
-            <Link to="/submit" className="flex items-center gap-2">
-              <Plane className="w-5 h-5" />
-              Submit Flight Request
-            </Link>
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button asChild size="lg">
+              <Link to="/submit" className="flex items-center gap-2">
+                <Plane className="w-5 h-5" />
+                Submit Flight Request
+              </Link>
+            </Button>
+            {!user && (
+              <Button asChild variant="outline" size="lg">
+                <Link to="/auth" className="flex items-center gap-2">
+                  <LogIn className="w-5 h-5" />
+                  Sign In to Track Requests
+                </Link>
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     </div>
