@@ -1,4 +1,6 @@
-import { FlightStatus } from '@/types/flight';
+import { Database } from '@/integrations/supabase/types';
+
+type FlightStatus = Database['public']['Tables']['flight_requests']['Row']['status'];
 import { cn } from '@/lib/utils';
 
 interface StatusBadgeProps {

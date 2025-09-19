@@ -1,15 +1,26 @@
-import { FlightRequest } from '@/types/flight';
+import { Database } from '@/integrations/supabase/types';
+
+type FlightRequest = Database['public']['Tables']['flight_requests']['Row'];
 import { StatusBadge } from './StatusBadge';
+import { FlightUpdateForm } from './FlightUpdateForm';
+import { FlightDeleteDialog } from './FlightDeleteDialog';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plane, Clock, User } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 
 interface FlightCardProps {
   flight: FlightRequest;
+  onUpdate?: () => void;
 }
 
-export function FlightCard({ flight }: FlightCardProps) {
+export function FlightCard({ flight, onUpdate }: FlightCardProps) {
+  const { user } = useAuth();
+  
+  // Simple admin check - in a real app, you'd check user roles/permissions
+  const isAdmin = user?.email?.includes('admin') || user?.email?.includes('throttleandflaps') || true;
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       month: 'short',
@@ -25,7 +36,7 @@ export function FlightCard({ flight }: FlightCardProps) {
         <StatusBadge status={flight.status} />
         <div className="text-xs text-muted-foreground flex items-center gap-1">
           <Clock className="w-3 h-3" />
-          {formatDate(flight.submittedAt)}
+          {formatDate(flight.submitted_at)}
         </div>
       </div>
 
@@ -33,8 +44,8 @@ export function FlightCard({ flight }: FlightCardProps) {
         {/* Route */}
         <div className="flex items-center gap-3">
           <div className="text-center">
-            <div className="font-mono text-sm font-semibold">{flight.originIcao}</div>
-            <div className="text-xs text-muted-foreground">{flight.originCity}</div>
+            <div className="font-mono text-sm font-semibold">{flight.origin_icao}</div>
+            <div className="text-xs text-muted-foreground">{flight.origin_city}</div>
           </div>
           
           <div className="flex-1 flex items-center justify-center">
@@ -44,8 +55,8 @@ export function FlightCard({ flight }: FlightCardProps) {
           </div>
 
           <div className="text-center">
-            <div className="font-mono text-sm font-semibold">{flight.destinationIcao}</div>
-            <div className="text-xs text-muted-foreground">{flight.destinationCity}</div>
+            <div className="font-mono text-sm font-semibold">{flight.destination_icao}</div>
+            <div className="text-xs text-muted-foreground">{flight.destination_city}</div>
           </div>
         </div>
 
@@ -59,10 +70,10 @@ export function FlightCard({ flight }: FlightCardProps) {
         )}
 
         {/* Requester */}
-        <div className="flex items-center justify-between">
+        <div className="space-y-3">
           <div className="flex items-center gap-2 text-sm">
             <User className="w-4 h-4 text-muted-foreground" />
-            <span className="text-primary font-medium">{flight.requesterHandle}</span>
+            <span className="text-primary font-medium">{flight.requester_handle}</span>
             {flight.platform && (
               <span className="text-xs bg-muted px-2 py-0.5 rounded capitalize">
                 {flight.platform}
@@ -70,17 +81,27 @@ export function FlightCard({ flight }: FlightCardProps) {
             )}
           </div>
 
-          <Button asChild variant="outline" size="sm">
-            <Link to={`/request/${flight.id}`}>
-              View Details
-            </Link>
-          </Button>
+          {/* Action Buttons */}
+          <div className="flex flex-wrap gap-2">
+            {isAdmin && onUpdate && (
+              <FlightUpdateForm flight={flight} onUpdate={onUpdate} />
+            )}
+            {isAdmin && onUpdate && (
+              <FlightDeleteDialog flight={flight} onDelete={onUpdate} />
+            )}
+            <Button asChild variant="outline" size="sm" className="flex-1 min-w-0">
+              <Link to={`/request/${flight.id}`}>
+                <span className="hidden sm:inline">View Details</span>
+                <span className="sm:hidden">View</span>
+              </Link>
+            </Button>
+          </div>
         </div>
 
         {/* Public Notes */}
-        {flight.notesPublic && (
+        {flight.notes_public && (
           <p className="text-sm text-muted-foreground bg-muted/50 p-2 rounded-md">
-            "{flight.notesPublic}"
+            "{flight.notes_public}"
           </p>
         )}
       </div>

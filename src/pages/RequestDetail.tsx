@@ -1,24 +1,40 @@
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, ExternalLink, Clock, User, Plane, MapPin } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Clock, User, Plane, MapPin, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { StatusBadge } from '@/components/StatusBadge';
-import { mockFlights, mockStatusEvents, mockMediaLinks } from '@/data/mockData';
+import { useFlight, useStatusEvents, useMediaLinks } from '@/hooks/useFlights';
 
 export default function RequestDetail() {
   const { id } = useParams();
   
-  // In real app, this would fetch from Supabase
-  const flight = mockFlights.find(f => f.id === id);
-  const statusEvents = mockStatusEvents.filter(e => e.flightRequestId === id);
-  const mediaLinks = mockMediaLinks.filter(l => l.flightRequestId === id);
+  // Fetch flight data from database
+  const { data: flight, isLoading: flightLoading, error: flightError } = useFlight(id!);
+  const { data: statusEvents = [] } = useStatusEvents(id!);
+  const { data: mediaLinks = [] } = useMediaLinks(id!);
 
-  if (!flight) {
+  // Loading state
+  if (flightLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading flight details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (flightError || !flight) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="text-center">
           <h1 className="text-2xl font-semibold mb-4">Flight Request Not Found</h1>
+          <p className="text-muted-foreground mb-4">
+            The flight request you're looking for doesn't exist or has been removed.
+          </p>
           <Button asChild>
             <Link to="/">← Back to Feed</Link>
           </Button>
@@ -56,11 +72,11 @@ export default function RequestDetail() {
             <div className="flex items-center gap-3 text-muted-foreground">
               <span className="flex items-center gap-1">
                 <User className="w-4 h-4" />
-                {flight.requesterHandle}
+                {flight.requester_handle}
               </span>
               <span className="flex items-center gap-1">
                 <Clock className="w-4 h-4" />
-                {formatDateTime(flight.submittedAt)}
+                {formatDateTime(flight.submitted_at)}
               </span>
             </div>
           </div>
@@ -81,10 +97,10 @@ export default function RequestDetail() {
             <div className="space-y-4">
               <div className="flex items-center gap-4">
                 <div className="text-center flex-1">
-                  <div className="text-2xl font-mono font-bold">{flight.originIcao}</div>
+                  <div className="text-2xl font-mono font-bold">{flight.origin_icao}</div>
                   <div className="text-sm text-muted-foreground flex items-center gap-1">
                     <MapPin className="w-3 h-3" />
-                    {flight.originCity}
+                    {flight.origin_city}
                   </div>
                 </div>
                 
@@ -95,10 +111,10 @@ export default function RequestDetail() {
                 </div>
 
                 <div className="text-center flex-1">
-                  <div className="text-2xl font-mono font-bold">{flight.destinationIcao}</div>
+                  <div className="text-2xl font-mono font-bold">{flight.destination_icao}</div>
                   <div className="text-sm text-muted-foreground flex items-center gap-1">
                     <MapPin className="w-3 h-3" />
-                    {flight.destinationCity}
+                    {flight.destination_city}
                   </div>
                 </div>
               </div>
@@ -127,11 +143,11 @@ export default function RequestDetail() {
           </Card>
 
           {/* Notes */}
-          {flight.notesPublic && (
+          {flight.notes_public && (
             <Card className="p-6">
               <h2 className="text-lg font-semibold mb-4">Requester Notes</h2>
               <p className="text-muted-foreground leading-relaxed">
-                "{flight.notesPublic}"
+                "{flight.notes_public}"
               </p>
             </Card>
           )}
@@ -146,7 +162,7 @@ export default function RequestDetail() {
                     <div>
                       <div className="font-medium">{link.title || `${link.platform} Video`}</div>
                       <div className="text-sm text-muted-foreground capitalize">
-                        {link.platform} • Published {formatDateTime(link.publishedAt)}
+                        {link.platform} • Published {formatDateTime(link.published_at)}
                       </div>
                     </div>
                     <Button asChild size="sm">
@@ -169,7 +185,7 @@ export default function RequestDetail() {
             <h3 className="text-lg font-semibold mb-4">Status Timeline</h3>
             <div className="space-y-4">
               {statusEvents
-                .sort((a, b) => new Date(b.changedAt).getTime() - new Date(a.changedAt).getTime())
+                .sort((a, b) => new Date(b.changed_at).getTime() - new Date(a.changed_at).getTime())
                 .map((event, index) => (
                 <div key={event.id} className="flex gap-3">
                   <div className="flex flex-col items-center">
@@ -180,10 +196,10 @@ export default function RequestDetail() {
                   </div>
                   <div className="flex-1 pb-4">
                     <div className="font-medium capitalize">
-                      {event.toStatus.replace('_', ' ')}
+                      {event.to_status.replace('_', ' ')}
                     </div>
                     <div className="text-sm text-muted-foreground">
-                      {formatDateTime(event.changedAt)}
+                      {formatDateTime(event.changed_at)}
                     </div>
                     {event.comment && (
                       <div className="text-sm mt-1">{event.comment}</div>
@@ -200,7 +216,7 @@ export default function RequestDetail() {
             <div className="space-y-3 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Submitted:</span>
-                <span>{formatDateTime(flight.submittedAt)}</span>
+                <span>{formatDateTime(flight.submitted_at)}</span>
               </div>
               
               {flight.platform && (

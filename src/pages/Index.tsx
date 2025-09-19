@@ -3,15 +3,33 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { FlightCard } from '@/components/FlightCard';
 import { FilterBar } from '@/components/FilterBar';
-import { mockFlights } from '@/data/mockData';
-import { FilterOptions } from '@/types/flight';
-import { Plane, PlusCircle } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
+import { useFlights, useFlightsByStatus } from '@/hooks/useFlights';
+import { Database } from '@/integrations/supabase/types';
+import { Plane, PlusCircle, LogIn, Loader2 } from 'lucide-react';
+
+type FlightRequest = Database['public']['Tables']['flight_requests']['Row'];
+
+interface FilterOptions {
+  status?: string[];
+  airline?: string[];
+  aircraft?: string[];
+  search?: string;
+  sortBy?: 'newest' | 'oldest' | 'priority' | 'eta';
+}
 
 const Index = () => {
   const [filters, setFilters] = useState<FilterOptions>({ sortBy: 'newest' });
+  const { user } = useAuth();
+  
+  // Fetch flights from database
+  const { data: allFlights, isLoading, error } = useFlights();
+  const { data: activeFlights } = useFlightsByStatus('underway');
 
   const filteredFlights = useMemo(() => {
-    let filtered = [...mockFlights].filter(flight => flight.visibility === 'public');
+    if (!allFlights) return [];
+    
+    let filtered: FlightRequest[] = [...allFlights];
 
     // Apply status filter
     if (filters.status && filters.status.length > 0) {
@@ -22,23 +40,23 @@ const Index = () => {
     if (filters.search) {
       const searchLower = filters.search.toLowerCase();
       filtered = filtered.filter(flight => 
-        flight.originIcao.toLowerCase().includes(searchLower) ||
-        flight.originCity.toLowerCase().includes(searchLower) ||
-        flight.destinationIcao.toLowerCase().includes(searchLower) ||
-        flight.destinationCity.toLowerCase().includes(searchLower) ||
+        flight.origin_icao.toLowerCase().includes(searchLower) ||
+        flight.origin_city.toLowerCase().includes(searchLower) ||
+        flight.destination_icao.toLowerCase().includes(searchLower) ||
+        flight.destination_city.toLowerCase().includes(searchLower) ||
         flight.airline?.toLowerCase().includes(searchLower) ||
         flight.aircraft?.toLowerCase().includes(searchLower) ||
-        flight.requesterHandle.toLowerCase().includes(searchLower)
+        flight.requester_handle.toLowerCase().includes(searchLower)
       );
     }
 
     // Apply sorting
     switch (filters.sortBy) {
       case 'newest':
-        filtered.sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
+        filtered.sort((a, b) => new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime());
         break;
       case 'oldest':
-        filtered.sort((a, b) => new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime());
+        filtered.sort((a, b) => new Date(a.submitted_at).getTime() - new Date(b.submitted_at).getTime());
         break;
       case 'priority':
         filtered.sort((a, b) => b.priority - a.priority);
@@ -54,7 +72,31 @@ const Index = () => {
     }
 
     return filtered;
-  }, [filters]);
+  }, [filters, allFlights]);
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading flights...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-destructive mb-4">Error loading flights</p>
+          <p className="text-muted-foreground">Please try again later</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -83,6 +125,14 @@ const Index = () => {
                   How It Works
                 </Link>
               </Button>
+              {!user && (
+                <Button asChild variant="secondary" size="lg">
+                  <Link to="/auth" className="flex items-center gap-2">
+                    <LogIn className="w-5 h-5" />
+                    Sign In
+                  </Link>
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -94,14 +144,14 @@ const Index = () => {
         <div className="mb-8">
           <h2 className="text-2xl font-semibold mb-4">Now Playing & Up Next</h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {mockFlights
-              .filter(f => ['underway', 'edited'].includes(f.status))
+            {allFlights
+              ?.filter((f: FlightRequest) => ['underway', 'edited'].includes(f.status))
               .slice(0, 3)
-              .map(flight => (
+              .map((flight: FlightRequest) => (
                 <FlightCard key={flight.id} flight={flight} />
               ))}
           </div>
-          {mockFlights.filter(f => ['underway', 'edited'].includes(f.status)).length === 0 && (
+          {allFlights?.filter((f: FlightRequest) => ['underway', 'edited'].includes(f.status)).length === 0 && (
             <div className="text-center py-8 text-muted-foreground">
               No flights currently in progress. Check back soon!
             </div>
@@ -150,12 +200,22 @@ const Index = () => {
             Join the community and see your favorite routes brought to life in Microsoft Flight Simulator 2024.
             From challenging approaches to scenic routes, every flight tells a story.
           </p>
-          <Button asChild size="lg">
-            <Link to="/submit" className="flex items-center gap-2">
-              <Plane className="w-5 h-5" />
-              Submit Flight Request
-            </Link>
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button asChild size="lg">
+              <Link to="/submit" className="flex items-center gap-2">
+                <Plane className="w-5 h-5" />
+                Submit Flight Request
+              </Link>
+            </Button>
+            {!user && (
+              <Button asChild variant="outline" size="lg">
+                <Link to="/auth" className="flex items-center gap-2">
+                  <LogIn className="w-5 h-5" />
+                  Sign In to Track Requests
+                </Link>
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     </div>

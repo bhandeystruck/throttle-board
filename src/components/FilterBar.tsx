@@ -10,7 +10,17 @@ import {
   SelectValue 
 } from '@/components/ui/select';
 import { Search, Filter, X } from 'lucide-react';
-import { FlightStatus, FilterOptions } from '@/types/flight';
+import { Database } from '@/integrations/supabase/types';
+
+type FlightStatus = Database['public']['Tables']['flight_requests']['Row']['status'];
+
+interface FilterOptions {
+  status?: string[];
+  airline?: string[];
+  aircraft?: string[];
+  search?: string;
+  sortBy?: 'newest' | 'oldest' | 'priority' | 'eta';
+}
 
 interface FilterBarProps {
   onFiltersChange: (filters: FilterOptions) => void;

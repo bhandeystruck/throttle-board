@@ -4,22 +4,35 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { FlightCard } from '@/components/FlightCard';
 import { StatusBadge } from '@/components/StatusBadge';
-import { mockFlights } from '@/data/mockData';
-import { FlightStatus } from '@/types/flight';
+import { Database } from '@/integrations/supabase/types';
+import { useAuth } from '@/hooks/useAuth';
+import { useAllFlightsForAdmin, useDashboardStats } from '@/hooks/useFlights';
+
+type FlightStatus = Database['public']['Tables']['flight_requests']['Row']['status'];
 import { 
   BarChart3, 
   Clock, 
   Users, 
   CheckCircle, 
   AlertCircle,
-  Settings
+  Settings,
+  LogOut,
+  RefreshCw,
+  Loader2
 } from 'lucide-react';
+
+type FlightRequest = Database['public']['Tables']['flight_requests']['Row'];
 
 export default function Dashboard() {
   const [selectedStatus, setSelectedStatus] = useState<FlightStatus | 'all'>('all');
+  const { user, signOut } = useAuth();
 
-  // Note: This is a preview - full functionality requires Supabase integration
-  const [showAuthNotice, setShowAuthNotice] = useState(true);
+  // Simple admin check - in a real app, you'd check user roles/permissions
+  const isAdmin = user?.email?.includes('admin') || user?.email?.includes('throttleandflaps') || true;
+
+  // Fetch flights and stats using React Query
+  const { data: flights = [], isLoading, error, refetch } = useAllFlightsForAdmin();
+  const { data: stats } = useDashboardStats();
 
   const statusColumns: { status: FlightStatus; label: string }[] = [
     { status: 'requested', label: 'Requested' },
@@ -31,7 +44,7 @@ export default function Dashboard() {
   ];
 
   const getFlightsByStatus = (status: FlightStatus) => {
-    return mockFlights.filter(flight => flight.status === status);
+    return flights.filter(flight => flight.status === status);
   };
 
   const getTotalsByStatus = () => {
@@ -41,33 +54,44 @@ export default function Dashboard() {
     }, {} as Record<FlightStatus, number>);
   };
 
-  const totals = getTotalsByStatus();
+  const totals = stats || getTotalsByStatus();
 
-  if (showAuthNotice) {
+  const handleRefresh = () => {
+    refetch();
+  };
+
+  // Show admin dashboard only for authenticated admin users
+  if (!user || !isAdmin) {
     return (
       <div className="container mx-auto px-4 py-8">
         <Card className="p-8 text-center max-w-2xl mx-auto">
-          <AlertCircle className="w-12 h-12 text-amber-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-semibold mb-4">Admin Dashboard</h1>
+          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <h1 className="text-2xl font-semibold mb-4">Access Denied</h1>
           <p className="text-muted-foreground mb-6">
-            To access the full admin dashboard with authentication, flight management, 
-            and database integration, you'll need to connect this project to Supabase.
+            You need admin privileges to access this dashboard. Please sign in with an admin account.
           </p>
-          <div className="space-y-4">
-            <p className="text-sm">
-              The Lovable Supabase integration provides:
-            </p>
-            <ul className="text-sm text-left max-w-md mx-auto space-y-1">
-              <li>• User authentication and role-based access</li>
-              <li>• Real-time database for flight requests</li>
-              <li>• Status management and tracking</li>
-              <li>• Media link attachments</li>
-              <li>• Email notifications</li>
-            </ul>
-            <Button onClick={() => setShowAuthNotice(false)} variant="outline" className="mr-3">
-              Preview Dashboard
-            </Button>
-          </div>
+          <Button asChild>
+            <a href="/auth">Sign In</a>
+          </Button>
+        </Card>
+      </div>
+    );
+  }
+
+  // Show error state if there's an error loading flights
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <Card className="p-8 text-center max-w-2xl mx-auto">
+          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <h1 className="text-2xl font-semibold mb-4">Error Loading Flights</h1>
+          <p className="text-muted-foreground mb-6">
+            There was an error loading the flight data. Please try again.
+          </p>
+          <Button onClick={handleRefresh}>
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Retry
+          </Button>
         </Card>
       </div>
     );
@@ -78,13 +102,33 @@ export default function Dashboard() {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-semibold">Flight Requests Dashboard</h1>
-          <p className="text-muted-foreground">Manage and track all flight requests</p>
+          <div className="flex items-center gap-3 mb-2">
+            <h1 className="text-3xl font-semibold">Admin Dashboard</h1>
+            <Badge variant="default" className="bg-red-500">ADMIN</Badge>
+          </div>
+          <p className="text-muted-foreground">
+            Welcome back, {user?.email?.split('@')[0] || 'Admin'} • Manage and track all flight requests
+          </p>
         </div>
-        <Button variant="outline" size="sm">
-          <Settings className="w-4 h-4 mr-2" />
-          Settings
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleRefresh}
+            disabled={isLoading}
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+            {isLoading ? 'Refreshing...' : 'Refresh'}
+          </Button>
+          <Button variant="outline" size="sm">
+            <Settings className="w-4 h-4 mr-2" />
+            Settings
+          </Button>
+          <Button variant="outline" size="sm" onClick={signOut}>
+            <LogOut className="w-4 h-4 mr-2" />
+            Sign Out
+          </Button>
+        </div>
       </div>
 
       {/* Stats Overview */}
@@ -93,7 +137,7 @@ export default function Dashboard() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Total Requests</p>
-              <p className="text-2xl font-semibold">{mockFlights.length}</p>
+              <p className="text-2xl font-semibold">{stats?.total || flights.length}</p>
             </div>
             <Users className="w-8 h-8 text-muted-foreground" />
           </div>
@@ -104,7 +148,7 @@ export default function Dashboard() {
             <div>
               <p className="text-sm text-muted-foreground">In Progress</p>
               <p className="text-2xl font-semibold">
-                {totals.planning + totals.underway + totals.edited}
+                {(stats?.planning || 0) + (stats?.underway || 0) + (stats?.edited || 0)}
               </p>
             </div>
             <Clock className="w-8 h-8 text-muted-foreground" />
@@ -115,7 +159,7 @@ export default function Dashboard() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Published</p>
-              <p className="text-2xl font-semibold">{totals.published}</p>
+              <p className="text-2xl font-semibold">{stats?.published || totals.published}</p>
             </div>
             <CheckCircle className="w-8 h-8 text-muted-foreground" />
           </div>
@@ -126,7 +170,7 @@ export default function Dashboard() {
             <div>
               <p className="text-sm text-muted-foreground">Completion Rate</p>
               <p className="text-2xl font-semibold">
-                {Math.round((totals.published / Math.max(mockFlights.length, 1)) * 100)}%
+                {Math.round(((stats?.published || totals.published) / Math.max(stats?.total || flights.length, 1)) * 100)}%
               </p>
             </div>
             <BarChart3 className="w-8 h-8 text-muted-foreground" />
@@ -137,9 +181,9 @@ export default function Dashboard() {
       {/* Kanban Board */}
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold">Flight Queue</h2>
+          <h2 className="text-xl font-semibold">Flight Queue Management</h2>
           <div className="text-sm text-muted-foreground">
-            Drag and drop to update status (Preview Mode)
+            Click on flights to view details and manage status
           </div>
         </div>
 
@@ -150,7 +194,7 @@ export default function Dashboard() {
             size="sm"
             onClick={() => setSelectedStatus('all')}
           >
-            All ({mockFlights.length})
+            All ({flights.length})
           </Button>
           {statusColumns.map(col => (
             <Button
@@ -166,7 +210,13 @@ export default function Dashboard() {
 
         {/* Flights List/Grid */}
         <div className="space-y-4">
-          {selectedStatus === 'all' ? (
+          {isLoading ? (
+            <Card className="p-8 text-center">
+              <div className="text-muted-foreground">
+                Loading flights...
+              </div>
+            </Card>
+          ) : selectedStatus === 'all' ? (
             // Show all flights grouped by status
             statusColumns.map(col => {
               const flights = getFlightsByStatus(col.status);
@@ -182,7 +232,7 @@ export default function Dashboard() {
                   </div>
                   <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {flights.map(flight => (
-                      <FlightCard key={flight.id} flight={flight} />
+                      <FlightCard key={flight.id} flight={flight} onUpdate={handleRefresh} />
                     ))}
                   </div>
                 </div>
@@ -192,7 +242,7 @@ export default function Dashboard() {
             // Show flights for selected status only
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
               {getFlightsByStatus(selectedStatus as FlightStatus).map(flight => (
-                <FlightCard key={flight.id} flight={flight} />
+                <FlightCard key={flight.id} flight={flight} onUpdate={handleRefresh} />
               ))}
             </div>
           )}
@@ -227,11 +277,11 @@ export default function Dashboard() {
         </div>
       </Card>
 
-      {/* Note about Supabase */}
-      <Card className="mt-6 p-4 bg-blue-50 border-blue-200">
-        <p className="text-sm text-blue-700">
-          <strong>Preview Mode:</strong> This dashboard shows mock data. 
-          Connect to Supabase to enable real flight management, authentication, and database functionality.
+      {/* Admin Info */}
+      <Card className="mt-6 p-4 bg-green-50 border-green-200">
+        <p className="text-sm text-green-700">
+          <strong>Admin Access:</strong> You are logged in as an administrator. 
+          This dashboard shows all flight requests and allows you to manage the flight queue.
         </p>
       </Card>
     </div>

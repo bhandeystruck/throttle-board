@@ -7,14 +7,146 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "13.0.5"
   }
   public: {
     Tables: {
-      [_ in never]: never
+      flight_requests: {
+        Row: {
+          id: string
+          submitted_at: string
+          status: 'requested' | 'queued' | 'planning' | 'underway' | 'edited' | 'published' | 'archived' | 'declined'
+          requester_handle: string
+          platform: 'tiktok' | 'instagram' | 'youtube' | 'other' | null
+          origin_icao: string
+          origin_city: string
+          destination_icao: string
+          destination_city: string
+          airline: string | null
+          aircraft: string | null
+          sim: string
+          notes_public: string | null
+          notes_private: string | null
+          eta: string | null
+          priority: number
+          visibility: 'public' | 'unlisted' | 'private'
+          published_at: string | null
+          created_at: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          id?: string
+          submitted_at?: string
+          status?: 'requested' | 'queued' | 'planning' | 'underway' | 'edited' | 'published' | 'archived' | 'declined'
+          requester_handle: string
+          platform?: 'tiktok' | 'instagram' | 'youtube' | 'other' | null
+          origin_icao: string
+          origin_city: string
+          destination_icao: string
+          destination_city: string
+          airline?: string | null
+          aircraft?: string | null
+          sim?: string
+          notes_public?: string | null
+          notes_private?: string | null
+          eta?: string | null
+          priority?: number
+          visibility?: 'public' | 'unlisted' | 'private'
+          published_at?: string | null
+          created_at?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          id?: string
+          submitted_at?: string
+          status?: 'requested' | 'queued' | 'planning' | 'underway' | 'edited' | 'published' | 'archived' | 'declined'
+          requester_handle?: string
+          platform?: 'tiktok' | 'instagram' | 'youtube' | 'other' | null
+          origin_icao?: string
+          origin_city?: string
+          destination_icao?: string
+          destination_city?: string
+          airline?: string | null
+          aircraft?: string | null
+          sim?: string
+          notes_public?: string | null
+          notes_private?: string | null
+          eta?: string | null
+          priority?: number
+          visibility?: 'public' | 'unlisted' | 'private'
+          published_at?: string | null
+          created_at?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+      }
+      media_links: {
+        Row: {
+          id: string
+          flight_request_id: string
+          platform: 'tiktok' | 'instagram' | 'youtube' | 'other'
+          url: string
+          title: string | null
+          thumbnail_url: string | null
+          published_at: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          flight_request_id: string
+          platform: 'tiktok' | 'instagram' | 'youtube' | 'other'
+          url: string
+          title?: string | null
+          thumbnail_url?: string | null
+          published_at?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          flight_request_id?: string
+          platform?: 'tiktok' | 'instagram' | 'youtube' | 'other'
+          url?: string
+          title?: string | null
+          thumbnail_url?: string | null
+          published_at?: string
+          created_at?: string
+        }
+      }
+      status_events: {
+        Row: {
+          id: string
+          flight_request_id: string
+          from_status: 'requested' | 'queued' | 'planning' | 'underway' | 'edited' | 'published' | 'archived' | 'declined' | null
+          to_status: 'requested' | 'queued' | 'planning' | 'underway' | 'edited' | 'published' | 'archived' | 'declined'
+          changed_at: string
+          comment: string | null
+          changed_by: string
+          user_id: string | null
+        }
+        Insert: {
+          id?: string
+          flight_request_id: string
+          from_status?: 'requested' | 'queued' | 'planning' | 'underway' | 'edited' | 'published' | 'archived' | 'declined' | null
+          to_status: 'requested' | 'queued' | 'planning' | 'underway' | 'edited' | 'published' | 'archived' | 'declined'
+          changed_at?: string
+          comment?: string | null
+          changed_by: string
+          user_id?: string | null
+        }
+        Update: {
+          id?: string
+          flight_request_id?: string
+          from_status?: 'requested' | 'queued' | 'planning' | 'underway' | 'edited' | 'published' | 'archived' | 'declined' | null
+          to_status?: 'requested' | 'queued' | 'planning' | 'underway' | 'edited' | 'published' | 'archived' | 'declined'
+          changed_at?: string
+          comment?: string | null
+          changed_by?: string
+          user_id?: string | null
+        }
+      }
     }
     Views: {
       [_ in never]: never
