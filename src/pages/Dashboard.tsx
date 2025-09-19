@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -100,33 +101,38 @@ export default function Dashboard() {
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6 lg:mb-8 gap-4">
         <div>
-          <div className="flex items-center gap-3 mb-2">
-            <h1 className="text-3xl font-semibold">Admin Dashboard</h1>
-            <Badge variant="default" className="bg-red-500">ADMIN</Badge>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
+            <h1 className="text-2xl lg:text-3xl font-semibold">Admin Dashboard</h1>
+            <Badge variant="default" className="bg-red-500 w-fit">ADMIN</Badge>
           </div>
-          <p className="text-muted-foreground">
+          <p className="text-sm lg:text-base text-muted-foreground">
             Welcome back, {user?.email?.split('@')[0] || 'Admin'} • Manage and track all flight requests
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button 
             variant="outline" 
             size="sm" 
             onClick={handleRefresh}
             disabled={isLoading}
+            className="flex-1 sm:flex-none"
           >
             <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-            {isLoading ? 'Refreshing...' : 'Refresh'}
+            <span className="hidden sm:inline">{isLoading ? 'Refreshing...' : 'Refresh'}</span>
+            <span className="sm:hidden">{isLoading ? '...' : '↻'}</span>
           </Button>
-          <Button variant="outline" size="sm">
-            <Settings className="w-4 h-4 mr-2" />
-            Settings
+          <Button asChild variant="outline" size="sm" className="flex-1 sm:flex-none">
+            <Link to="/profile" className="flex items-center justify-center gap-2">
+              <Settings className="w-4 h-4" />
+              <span className="hidden sm:inline">Profile</span>
+            </Link>
           </Button>
-          <Button variant="outline" size="sm" onClick={signOut}>
+          <Button variant="outline" size="sm" onClick={signOut} className="flex-1 sm:flex-none">
             <LogOut className="w-4 h-4 mr-2" />
-            Sign Out
+            <span className="hidden sm:inline">Sign Out</span>
+            <span className="sm:hidden">Out</span>
           </Button>
         </div>
       </div>

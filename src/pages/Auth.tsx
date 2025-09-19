@@ -105,8 +105,8 @@ const Auth = () => {
           <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-4">
             <Plane className="w-8 h-8 text-primary" />
           </div>
-          <h1 className="text-3xl font-bold mb-2">Flight Requests Tracker</h1>
-          <p className="text-muted-foreground">Sign in to manage your flight requests</p>
+          <h1 className="text-2xl md:text-3xl font-bold mb-2">Flight Requests Tracker</h1>
+          <p className="text-sm md:text-base text-muted-foreground">Sign in to manage your flight requests</p>
         </div>
 
         <Card>
