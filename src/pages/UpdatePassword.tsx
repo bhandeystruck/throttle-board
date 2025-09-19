@@ -13,7 +13,7 @@ export default function UpdatePassword() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
-  const { user, signOut } = useAuth();
+  const { user, updatePassword } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -48,16 +48,23 @@ export default function UpdatePassword() {
     setLoading(true);
     
     try {
-      // Note: This would need to be implemented in the useAuth hook
-      // For now, we'll simulate the update
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const { error } = await updatePassword(password);
       
-      setSuccess(true);
-      toast({
-        title: 'Password updated!',
-        description: 'Your password has been successfully updated.',
-      });
+      if (error) {
+        toast({
+          title: 'Update failed',
+          description: error.message,
+          variant: 'destructive',
+        });
+      } else {
+        setSuccess(true);
+        toast({
+          title: 'Password updated!',
+          description: 'Your password has been successfully updated.',
+        });
+      }
     } catch (error) {
+      console.error('Password update error:', error);
       toast({
         title: 'Update failed',
         description: 'There was an error updating your password. Please try again.',

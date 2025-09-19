@@ -9,6 +9,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { useCreateFlightRequest } from '@/hooks/useFlights';
+import { useAuth } from '@/hooks/useAuth';
+import { Database } from '@/integrations/supabase/types';
+
+type FlightRequestInsert = Database['public']['Tables']['flight_requests']['Insert'];
 
 interface SubmitFormData {
   requesterHandle: string;
@@ -23,9 +28,10 @@ interface SubmitFormData {
 }
 
 export default function SubmitRequest() {
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
+  const createFlightMutation = useCreateFlightRequest();
   
   const {
     register,
@@ -36,18 +42,42 @@ export default function SubmitRequest() {
   } = useForm<SubmitFormData>();
 
   const onSubmit = async (data: SubmitFormData) => {
-    setIsSubmitting(true);
-    
-    // Simulate API call - in real app, this would hit Supabase
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    toast({
-      title: "Flight Request Submitted!",
-      description: "Your request has been added to the queue. You'll be notified when it's ready!",
-    });
-    
-    setIsSubmitting(false);
-    navigate('/');
+    try {
+      // Transform form data to database format
+      const flightData: FlightRequestInsert = {
+        requester_handle: data.requesterHandle,
+        platform: data.platform as any || null,
+        origin_icao: data.originIcao.toUpperCase(),
+        origin_city: data.originCity,
+        destination_icao: data.destinationIcao.toUpperCase(),
+        destination_city: data.destinationCity,
+        airline: data.airline || null,
+        aircraft: data.aircraft || null,
+        sim: 'MSFS 2024', // Default simulator
+        notes_public: data.notesPublic || null,
+        priority: 1, // Default priority
+        visibility: 'public', // Default visibility
+        status: 'requested', // Initial status
+        user_id: user?.id || null, // Include user_id if authenticated
+      };
+
+      // Submit to database
+      const newFlight = await createFlightMutation.mutateAsync(flightData);
+      
+      toast({
+        title: "Flight Request Submitted!",
+        description: `Your request #${newFlight.id.slice(0, 8)} has been added to the queue. You'll be notified when it's ready!`,
+      });
+      
+      navigate('/');
+    } catch (error) {
+      console.error('Error submitting flight request:', error);
+      toast({
+        title: "Submission Failed",
+        description: "There was an error submitting your flight request. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -235,9 +265,9 @@ export default function SubmitRequest() {
               type="submit" 
               className="w-full" 
               size="lg"
-              disabled={isSubmitting}
+              disabled={createFlightMutation.isPending}
             >
-              {isSubmitting ? (
+              {createFlightMutation.isPending ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                   Submitting Request...

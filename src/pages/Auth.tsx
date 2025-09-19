@@ -161,7 +161,7 @@ const Auth = () => {
                         const resetTab = tabs?.querySelector('[value="reset"]') as HTMLElement;
                         resetTab?.click();
                       }}
-                      className="text-sm text-muted-foreground"
+                      className="text-sm text-primary hover:text-primary/80"
                     >
                       Forgot your password?
                     </Button>
@@ -212,6 +212,9 @@ const Auth = () => {
                       </p>
                       <p className="text-sm text-muted-foreground mb-6">
                         Click the link in the email to reset your password. The link will expire in 1 hour.
+                      </p>
+                      <p className="text-xs text-muted-foreground mb-4">
+                        Don't see the email? Check your spam folder or try again.
                       </p>
                       <Button
                         variant="outline"
