@@ -24,7 +24,27 @@ export function Navigation() {
   };
 
   const handleSignOut = async () => {
-    await signOut();
+    try {
+      console.log('Attempting to sign out...');
+      await signOut();
+      console.log('Sign out successful');
+    } catch (error) {
+      console.error('Failed to sign out:', error);
+      console.error('Error details:', {
+        message: error?.message,
+        code: error?.code,
+        status: error?.status,
+        statusCode: error?.statusCode
+      });
+      
+      // Force clear local storage if sign out fails
+      try {
+        localStorage.removeItem('sb-' + import.meta.env.VITE_SUPABASE_URL?.split('//')[1]?.split('.')[0] + '-auth-token');
+        window.location.reload();
+      } catch (storageError) {
+        console.error('Failed to clear storage:', storageError);
+      }
+    }
   };
 
   const getUserInitials = (email: string) => {
