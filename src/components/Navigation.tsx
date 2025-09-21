@@ -12,10 +12,12 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Plane, PlusCircle, LayoutDashboard, LogIn, LogOut, User, Menu } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/useAuth';
+import { useIsAdmin } from '@/hooks/useAdmin';
 
 export function Navigation() {
   const location = useLocation();
   const { user, signOut } = useAuth();
+  const { isAdmin } = useIsAdmin();
 
   const isActive = (path: string) => {
     return location.pathname === path;
@@ -80,17 +82,19 @@ export function Navigation() {
               </Link>
             </Button>
 
-            <Button
-              asChild
-              variant={isActive('/dashboard') ? 'secondary' : 'ghost'}
-              size="sm"
-              className="ml-2"
-            >
-              <Link to="/dashboard" className="flex items-center gap-2">
-                <LayoutDashboard className="w-4 h-4" />
-                Dashboard
-              </Link>
-            </Button>
+            {user && (
+              <Button
+                asChild
+                variant={isActive(isAdmin ? '/dashboard' : '/my-dashboard') ? 'secondary' : 'ghost'}
+                size="sm"
+                className="ml-2"
+              >
+                <Link to={isAdmin ? '/dashboard' : '/my-dashboard'} className="flex items-center gap-2">
+                  <LayoutDashboard className="w-4 h-4" />
+                  {isAdmin ? 'Admin Dashboard' : 'My Dashboard'}
+                </Link>
+              </Button>
+            )}
           </div>
 
           {/* Desktop Authentication */}
@@ -120,9 +124,9 @@ export function Navigation() {
                   </div>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link to="/dashboard" className="flex items-center gap-2">
+                    <Link to={isAdmin ? '/dashboard' : '/my-dashboard'} className="flex items-center gap-2">
                       <LayoutDashboard className="w-4 h-4" />
-                      Dashboard
+                      {isAdmin ? 'Admin Dashboard' : 'My Dashboard'}
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
@@ -173,9 +177,9 @@ export function Navigation() {
                   </div>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link to="/dashboard" className="flex items-center gap-2">
+                    <Link to={isAdmin ? '/dashboard' : '/my-dashboard'} className="flex items-center gap-2">
                       <LayoutDashboard className="w-4 h-4" />
-                      Dashboard
+                      {isAdmin ? 'Admin Dashboard' : 'My Dashboard'}
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
@@ -247,12 +251,12 @@ export function Navigation() {
                       {user && (
                         <Button
                           asChild
-                          variant={isActive('/dashboard') ? 'secondary' : 'ghost'}
+                          variant={isActive(isAdmin ? '/dashboard' : '/my-dashboard') ? 'secondary' : 'ghost'}
                           className="w-full justify-start"
                         >
-                          <Link to="/dashboard" className="flex items-center gap-2">
+                          <Link to={isAdmin ? '/dashboard' : '/my-dashboard'} className="flex items-center gap-2">
                             <LayoutDashboard className="w-4 h-4" />
-                            Dashboard
+                            {isAdmin ? 'Admin Dashboard' : 'My Dashboard'}
                           </Link>
                         </Button>
                       )}

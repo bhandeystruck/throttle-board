@@ -11,6 +11,7 @@ import RequestDetail from "./pages/RequestDetail";
 import SubmitRequest from "./pages/SubmitRequest";
 import About from "./pages/About";
 import Dashboard from "./pages/Dashboard";
+import UserDashboard from "./pages/UserDashboard";
 import Profile from "./pages/Profile";
 import Auth from "./pages/Auth";
 import UpdatePassword from "./pages/UpdatePassword";
@@ -34,6 +35,11 @@ const App = () => (
             <Route path="/dashboard" element={
               <ProtectedRoute>
                 <Dashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/my-dashboard" element={
+              <ProtectedRoute>
+                <UserDashboard />
               </ProtectedRoute>
             } />
             <Route path="/profile" element={
