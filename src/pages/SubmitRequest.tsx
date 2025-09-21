@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plane, Send } from 'lucide-react';
+import { TikTokIcon, InstagramIcon, YouTubeIcon } from '@/components/SocialIcons';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -286,6 +287,29 @@ export default function SubmitRequest() {
             By submitting this request, you agree that your flight details and handle may be featured 
             in @ThrottleAndFlaps content across social media platforms.
           </p>
+          
+          {/* Social Media Links */}
+          <div className="flex justify-center gap-4 mt-4 pt-4 border-t">
+            <span className="text-xs text-muted-foreground">Follow @ThrottleAndFlaps:</span>
+            <Button asChild variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-primary h-6 px-2">
+              <a href="https://tiktok.com/@throttleandflaps" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1">
+                <TikTokIcon className="w-3 h-3" />
+                <span className="hidden sm:inline">TikTok</span>
+              </a>
+            </Button>
+            <Button asChild variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-primary h-6 px-2">
+              <a href="https://instagram.com/throttleandflaps" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1">
+                <InstagramIcon className="w-3 h-3" />
+                <span className="hidden sm:inline">Instagram</span>
+              </a>
+            </Button>
+            <Button asChild variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-primary h-6 px-2">
+              <a href="https://youtube.com/@throttleandflaps" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1">
+                <YouTubeIcon className="w-3 h-3" />
+                <span className="hidden sm:inline">YouTube</span>
+              </a>
+            </Button>
+          </div>
         </form>
       </Card>
     </div>

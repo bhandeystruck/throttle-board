@@ -35,7 +35,7 @@ export function useFlightsByStatus(status: string) {
 
 // Get single flight
 export function useFlight(id: string) {
-  return useQuery({
+  return useQuery<FlightRequest, Error>({
     queryKey: ['flight', id],
     queryFn: () => FlightService.getFlightById(id),
     enabled: !!id,
@@ -55,7 +55,7 @@ export function useUserFlights() {
 
 // Get media links for a flight
 export function useMediaLinks(flightId: string) {
-  return useQuery({
+  return useQuery<MediaLink[], Error>({
     queryKey: ['media-links', flightId],
     queryFn: () => FlightService.getMediaLinks(flightId),
     enabled: !!flightId,
@@ -64,7 +64,7 @@ export function useMediaLinks(flightId: string) {
 
 // Get status events for a flight
 export function useStatusEvents(flightId: string) {
-  return useQuery({
+  return useQuery<StatusEvent[], Error>({
     queryKey: ['status-events', flightId],
     queryFn: () => FlightService.getStatusEvents(flightId),
     enabled: !!flightId,

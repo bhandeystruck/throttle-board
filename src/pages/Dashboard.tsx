@@ -8,6 +8,7 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { Database } from '@/integrations/supabase/types';
 import { useAuth } from '@/hooks/useAuth';
 import { useAllFlightsForAdmin, useDashboardStats } from '@/hooks/useFlights';
+import { useIsAdmin } from '@/hooks/useAdmin';
 
 type FlightStatus = Database['public']['Tables']['flight_requests']['Row']['status'];
 import { 
@@ -27,9 +28,7 @@ type FlightRequest = Database['public']['Tables']['flight_requests']['Row'];
 export default function Dashboard() {
   const [selectedStatus, setSelectedStatus] = useState<FlightStatus | 'all'>('all');
   const { user, signOut } = useAuth();
-
-  // Simple admin check - in a real app, you'd check user roles/permissions
-  const isAdmin = user?.email?.includes('admin') || user?.email?.includes('throttleandflaps') || true;
+  const { isAdmin, isLoading: adminLoading } = useIsAdmin();
 
   // Fetch flights and stats using React Query
   const { data: flights = [], isLoading, error, refetch } = useAllFlightsForAdmin();

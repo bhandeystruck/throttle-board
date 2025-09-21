@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Plane, Users, Clock, Video, HelpCircle } from 'lucide-react';
+import { TikTokIcon, InstagramIcon, YouTubeIcon } from '@/components/SocialIcons';
 
 export default function About() {
   return (
@@ -121,17 +122,20 @@ export default function About() {
         
         <div className="flex flex-col sm:flex-row gap-3">
           <Button asChild>
-            <a href="https://tiktok.com/@throttleandflaps" target="_blank" rel="noopener noreferrer">
+            <a href="https://tiktok.com/@throttleandflaps" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
+              <TikTokIcon className="w-4 h-4" />
               Follow on TikTok
             </a>
           </Button>
           <Button asChild variant="outline">
-            <a href="https://instagram.com/throttleandflaps" target="_blank" rel="noopener noreferrer">
+            <a href="https://instagram.com/throttleandflaps" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
+              <InstagramIcon className="w-4 h-4" />
               Follow on Instagram
             </a>
           </Button>
           <Button asChild variant="outline">
-            <a href="https://youtube.com/@throttleandflaps" target="_blank" rel="noopener noreferrer">
+            <a href="https://youtube.com/@throttleandflaps" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
+              <YouTubeIcon className="w-4 h-4" />
               Subscribe on YouTube
             </a>
           </Button>

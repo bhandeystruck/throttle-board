@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useFlights, useFlightsByStatus } from '@/hooks/useFlights';
 import { Database } from '@/integrations/supabase/types';
 import { Plane, PlusCircle, LogIn, Loader2 } from 'lucide-react';
+import { TikTokIcon, InstagramIcon, YouTubeIcon } from '@/components/SocialIcons';
 
 type FlightRequest = Database['public']['Tables']['flight_requests']['Row'];
 
@@ -134,6 +135,28 @@ const Index = () => {
                 </Button>
               )}
             </div>
+            
+            {/* Social Media Links */}
+            <div className="flex justify-center gap-4 mt-6">
+              <Button asChild variant="ghost" size="sm" className="text-muted-foreground hover:text-primary">
+                <a href="https://tiktok.com/@throttleandflaps" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
+                  <TikTokIcon className="w-4 h-4" />
+                  <span className="hidden sm:inline">TikTok</span>
+                </a>
+              </Button>
+              <Button asChild variant="ghost" size="sm" className="text-muted-foreground hover:text-primary">
+                <a href="https://instagram.com/throttleandflaps" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
+                  <InstagramIcon className="w-4 h-4" />
+                  <span className="hidden sm:inline">Instagram</span>
+                </a>
+              </Button>
+              <Button asChild variant="ghost" size="sm" className="text-muted-foreground hover:text-primary">
+                <a href="https://youtube.com/@throttleandflaps" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
+                  <YouTubeIcon className="w-4 h-4" />
+                  <span className="hidden sm:inline">YouTube</span>
+                </a>
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -215,6 +238,28 @@ const Index = () => {
                 </Link>
               </Button>
             )}
+          </div>
+          
+          {/* Social Media Links */}
+          <div className="flex justify-center gap-4 mt-6">
+            <Button asChild variant="ghost" size="sm" className="text-muted-foreground hover:text-primary">
+              <a href="https://tiktok.com/@throttleandflaps" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
+                <TikTokIcon className="w-4 h-4" />
+                <span className="hidden sm:inline">TikTok</span>
+              </a>
+            </Button>
+            <Button asChild variant="ghost" size="sm" className="text-muted-foreground hover:text-primary">
+              <a href="https://instagram.com/throttleandflaps" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
+                <InstagramIcon className="w-4 h-4" />
+                <span className="hidden sm:inline">Instagram</span>
+              </a>
+            </Button>
+            <Button asChild variant="ghost" size="sm" className="text-muted-foreground hover:text-primary">
+              <a href="https://youtube.com/@throttleandflaps" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
+                <YouTubeIcon className="w-4 h-4" />
+                <span className="hidden sm:inline">YouTube</span>
+              </a>
+            </Button>
           </div>
         </div>
       </div>
