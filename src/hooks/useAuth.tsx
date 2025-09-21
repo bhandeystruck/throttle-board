@@ -63,8 +63,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     try {
-      console.log('Starting sign out process...');
-      
       // Clear local state first
       setUser(null);
       setSession(null);
@@ -75,7 +73,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       
       if (error) {
-        console.warn('Supabase sign out error:', error);
+        // Only log in development
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('Sign out error:', error.message);
+        }
         // Don't throw error, just log it and continue with local cleanup
       }
       
@@ -84,10 +85,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (authKey) {
         localStorage.removeItem(authKey);
       }
-      
-      console.log('Sign out completed successfully');
     } catch (error) {
-      console.error('Sign out failed:', error);
+      // Only log in development
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Sign out failed:', error);
+      }
       // Even if there's an error, clear local state
       setUser(null);
       setSession(null);

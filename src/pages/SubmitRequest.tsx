@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useCreateFlightRequest } from '@/hooks/useFlights';
 import { useAuth } from '@/hooks/useAuth';
 import { Database } from '@/integrations/supabase/types';
+import { validateFlightRequest, rateLimiter } from '@/lib/validation';
 
 type FlightRequestInsert = Database['public']['Tables']['flight_requests']['Insert'];
 
@@ -44,23 +45,44 @@ export default function SubmitRequest() {
 
   const onSubmit = async (data: SubmitFormData) => {
     try {
+      // Rate limiting check
+      const userKey = user?.id || 'anonymous';
+      if (!rateLimiter.isAllowed(userKey, 5, 60000)) { // 5 requests per minute
+        toast({
+          title: "Rate Limit Exceeded",
+          description: "Please wait a moment before submitting another request.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       // Transform form data to database format
-      const flightData: FlightRequestInsert = {
+      const rawFlightData = {
         requester_handle: data.requesterHandle,
-        platform: data.platform as any || null,
-        origin_icao: data.originIcao.toUpperCase(),
+        platform: data.platform || null,
+        origin_icao: data.originIcao,
         origin_city: data.originCity,
-        destination_icao: data.destinationIcao.toUpperCase(),
+        destination_icao: data.destinationIcao,
         destination_city: data.destinationCity,
         airline: data.airline || null,
         aircraft: data.aircraft || null,
-        sim: 'MSFS 2024', // Default simulator
         notes_public: data.notesPublic || null,
-        priority: 1, // Default priority
-        visibility: 'public', // Default visibility
-        status: 'requested', // Initial status
-        user_id: user?.id || null, // Include user_id if authenticated
+        user_id: user?.id || null,
       };
+
+      // Validate and sanitize data
+      const validation = validateFlightRequest(rawFlightData);
+      
+      if (!validation.valid) {
+        toast({
+          title: "Validation Error",
+          description: validation.errors.join(', '),
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const flightData: FlightRequestInsert = validation.sanitized;
 
       // Submit to database
       const newFlight = await createFlightMutation.mutateAsync(flightData);
@@ -72,7 +94,11 @@ export default function SubmitRequest() {
       
       navigate('/');
     } catch (error) {
-      console.error('Error submitting flight request:', error);
+      // Only log in development
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error submitting flight request:', error);
+      }
+      
       toast({
         title: "Submission Failed",
         description: "There was an error submitting your flight request. Please try again.",
