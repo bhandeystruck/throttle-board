@@ -1,73 +1,251 @@
-# Welcome to your Lovable project
+# 🛩️ Throttle Board - Flight Request Management System
 
-## Project info
+<div align="center">
 
-**URL**: https://lovable.dev/projects/3c0ce614-dbfe-4f9e-b877-35b8af9c7e81
+![Throttle Board Logo](https://img.shields.io/badge/Throttle%20Board-Flight%20Management-blue?style=for-the-badge&logo=airplane)
 
-## How can I edit this code?
+**A full-stack web application for managing flight simulation content requests**
 
-There are several ways of editing your application.
+[🌐 Live Demo](https://throttleandflaps.com) • [📱 Website](https://throttleandflaps.com) • [🐦 Twitter](https://twitter.com/throttleandflaps)
 
-**Use Lovable**
+</div>
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/3c0ce614-dbfe-4f9e-b877-35b8af9c7e81) and start prompting.
+---
 
-Changes made via Lovable will be committed automatically to this repo.
+## 🚀 Project Overview
 
-**Use your preferred IDE**
+**Throttle Board** is a comprehensive flight request management system built for **@ThrottleAndFlaps**, a Microsoft Flight Simulator content creator. The platform enables community members to submit flight requests that are tracked through a complete workflow from submission to content publication.
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### 🎯 Key Features
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- **📝 Flight Request Submission**: Users can submit detailed flight requests with route preferences, aircraft specifications, and special notes
+- **📊 Admin Dashboard**: Comprehensive management interface with Kanban-style workflow tracking
+- **🔄 Real-time Status Updates**: Track requests through 8 different status stages with audit trails
+- **🔍 Advanced Search & Filtering**: Powerful search capabilities across airports, routes, aircraft, and more
+- **📱 Responsive Design**: Mobile-first approach with seamless desktop experience
+- **🔐 Secure Authentication**: Role-based access control with admin privileges
+- **📈 Analytics Dashboard**: Real-time statistics and completion metrics
 
-Follow these steps:
+---
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+## 🛠️ Technology Stack
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+### Frontend
+- **React 18** with TypeScript for type-safe development
+- **Vite** for lightning-fast development and optimized builds
+- **Tailwind CSS** + **shadcn/ui** for modern, accessible UI components
+- **React Router DOM** for client-side routing
+- **React Hook Form** with Zod validation for robust form handling
+- **TanStack Query** for efficient server state management
 
-# Step 3: Install the necessary dependencies.
-npm i
+### Backend & Database
+- **Supabase** (PostgreSQL) for database and authentication
+- **Row Level Security (RLS)** for data protection
+- **Real-time subscriptions** for live updates
+- **RESTful API** design with TypeScript integration
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+### Development & Deployment
+- **TypeScript** for type safety and better developer experience
+- **ESLint** for code quality and consistency
+- **Vite** for modern build tooling
+- **Git** for version control
+
+---
+
+## 🏗️ Architecture & Design Patterns
+
+### Database Schema
+```sql
+flight_requests (main entity)
+├── id, status, requester_handle
+├── route: origin_icao, destination_icao, cities
+├── preferences: airline, aircraft, sim
+├── metadata: priority, visibility, timestamps
+└── notes: public, private
+
+media_links (published content)
+├── platform: youtube, tiktok, instagram
+├── url, title, thumbnail_url
+└── published_at
+
+status_events (audit trail)
+├── from_status, to_status
+├── changed_at, comment
+└── changed_by
+
+profiles (user management)
+├── user_id, display_name
+├── avatar_url, bio
+└── is_admin flag
+```
+
+### Application Architecture
+- **Component-based architecture** with reusable UI components
+- **Custom hooks** for business logic separation
+- **Service layer** for API abstraction
+- **Context providers** for global state management
+- **Protected routes** with authentication guards
+
+---
+
+## 🚦 Status Workflow
+
+```mermaid
+graph LR
+    A[Requested] --> B[Queued]
+    B --> C[Planning]
+    C --> D[Underway]
+    D --> E[Edited]
+    E --> F[Published]
+    
+    C --> G[Declined]
+    D --> H[Archived]
+    E --> H
+```
+
+**Status Stages:**
+1. **Requested** - Initial submission
+2. **Queued** - Added to production queue
+3. **Planning** - Route and aircraft selection
+4. **Underway** - Flight in progress
+5. **Edited** - Post-production editing
+6. **Published** - Content live on platforms
+7. **Declined** - Request not feasible
+8. **Archived** - Completed or cancelled
+
+---
+
+## 📱 Key Pages & Features
+
+### Public Pages
+- **🏠 Home Feed**: Browse all flight requests with filtering
+- **📝 Submit Request**: Detailed form for flight submissions
+- **📄 Request Details**: Individual flight information and timeline
+- **ℹ️ About**: Platform information and guidelines
+
+### Admin Dashboard
+- **📊 Statistics Overview**: Real-time metrics and completion rates
+- **📋 Kanban Board**: Visual workflow management
+- **✏️ Flight Management**: Edit, update status, add media links
+- **🔍 Advanced Filtering**: Search and filter by multiple criteria
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js 18+ and npm
+- Supabase account for backend services
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/throttle-board.git
+cd throttle-board
+
+# Install dependencies
+npm install
+
+# Set up environment variables
+cp .env.example .env.local
+# Add your Supabase credentials
+
+# Start development server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+### Environment Variables
+```env
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Available Scripts
+```bash
+npm run dev          # Start development server
+npm run build        # Build for production
+npm run preview      # Preview production build
+npm run lint         # Run ESLint
+```
 
-**Use GitHub Codespaces**
+---
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## 🔧 Development Features
 
-## What technologies are used for this project?
+### Code Quality
+- **TypeScript** for type safety
+- **ESLint** configuration for consistent code style
+- **Prettier** for code formatting
+- **Component documentation** with JSDoc
 
-This project is built with:
+### Performance Optimizations
+- **React Query** for efficient data fetching and caching
+- **Code splitting** with dynamic imports
+- **Optimized bundle** with Vite
+- **Lazy loading** for better initial load times
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+### Security Features
+- **Row Level Security** in Supabase
+- **Authentication guards** for protected routes
+- **Input validation** with Zod schemas
+- **XSS protection** with proper sanitization
 
-## How can I deploy this project?
+---
 
-Simply open [Lovable](https://lovable.dev/projects/3c0ce614-dbfe-4f9e-b877-35b8af9c7e81) and click on Share -> Publish.
+## 📊 Project Metrics
 
-## Can I connect a custom domain to my Lovable project?
+- **📁 50+ Components** with reusable UI patterns
+- **🔧 8 Custom Hooks** for business logic
+- **📝 5 Main Pages** with full functionality
+- **🗄️ 4 Database Tables** with relationships
+- **🔐 15+ RLS Policies** for security
+- **📱 100% Responsive** design
 
-Yes, you can!
+---
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## 🌟 Highlights for Recruiters
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+### Technical Excellence
+- **Modern React Patterns**: Hooks, Context, Suspense
+- **TypeScript Mastery**: Full type coverage and interfaces
+- **Database Design**: Normalized schema with proper relationships
+- **Security Implementation**: RLS policies and authentication
+- **Performance Optimization**: Query caching and code splitting
+
+### User Experience
+- **Intuitive Interface**: Clean, modern design with shadcn/ui
+- **Mobile-First**: Responsive design for all devices
+- **Real-time Updates**: Live status changes and notifications
+- **Accessibility**: WCAG compliant components
+
+### Business Logic
+- **Complex Workflow Management**: Multi-stage approval process
+- **Role-based Access Control**: Admin vs user permissions
+- **Audit Trail**: Complete history of status changes
+- **Analytics Integration**: Real-time metrics and reporting
+
+---
+
+## 🔗 Links & Resources
+
+- **🌐 Live Application**: [throttleandflaps.com](https://throttleandflaps.com)
+- **📱 Creator Website**: [throttleandflaps.com](https://throttleandflaps.com)
+- **🐦 Social Media**: [@ThrottleAndFlaps](https://twitter.com/throttleandflaps)
+- **📧 Contact**: Available upon request
+
+---
+
+## 📄 License
+
+This project is proprietary software developed for @ThrottleAndFlaps. All rights reserved.
+
+---
+
+<div align="center">
+
+**Built with ❤️ for the flight simulation community**
+
+*Showcasing modern web development practices and full-stack expertise*
+
+</div>
