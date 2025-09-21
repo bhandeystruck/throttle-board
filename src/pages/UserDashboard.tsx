@@ -29,8 +29,18 @@ type FlightRequest = Database['public']['Tables']['flight_requests']['Row'];
 export default function UserDashboard() {
   const { user } = useAuth();
   const { isAdmin, isLoading: adminLoading } = useIsAdmin();
-  const { data: userFlights, isLoading } = useUserFlights();
+  const { data: userFlights, isLoading, error } = useUserFlights();
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
+
+  // Debug logging (only in development)
+  if (process.env.NODE_ENV === 'development') {
+    console.log('UserDashboard Debug:', {
+      userId: user?.id,
+      userFlights: userFlights,
+      userFlightsLength: userFlights?.length,
+      error: error
+    });
+  }
 
   // Redirect admin users to admin dashboard
   if (!adminLoading && isAdmin) {
@@ -42,8 +52,8 @@ export default function UserDashboard() {
     total: userFlights?.length || 0,
     published: userFlights?.filter(f => f.status === 'published').length || 0,
     underway: userFlights?.filter(f => f.status === 'underway').length || 0,
-    pending: userFlights?.filter(f => f.status === 'pending').length || 0,
-    rejected: userFlights?.filter(f => f.status === 'rejected').length || 0,
+    requested: userFlights?.filter(f => f.status === 'requested').length || 0,
+    declined: userFlights?.filter(f => f.status === 'declined').length || 0,
   };
 
   // Filter flights by status
@@ -99,6 +109,11 @@ export default function UserDashboard() {
               Welcome back, {user?.user_metadata?.full_name || user?.email}! 
               Track your flight requests and see your progress.
             </p>
+            {process.env.NODE_ENV === 'development' && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Debug: User ID: {user?.id || 'No user ID'}
+              </p>
+            )}
           </div>
           <Button asChild>
             <Link to="/submit" className="flex items-center gap-2">
@@ -149,12 +164,12 @@ export default function UserDashboard() {
 
         <Card className="p-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-gray-100 rounded-lg">
-              <AlertCircle className="w-5 h-5 text-gray-600" />
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <AlertCircle className="w-5 h-5 text-blue-600" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Pending</p>
-              <p className="text-2xl font-bold">{stats.pending}</p>
+              <p className="text-sm text-muted-foreground">Requested</p>
+              <p className="text-2xl font-bold">{stats.requested}</p>
             </div>
           </div>
         </Card>
@@ -165,8 +180,8 @@ export default function UserDashboard() {
               <AlertCircle className="w-5 h-5 text-red-600" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Rejected</p>
-              <p className="text-2xl font-bold">{stats.rejected}</p>
+              <p className="text-sm text-muted-foreground">Declined</p>
+              <p className="text-2xl font-bold">{stats.declined}</p>
             </div>
           </div>
         </Card>
@@ -234,22 +249,22 @@ export default function UserDashboard() {
                 Underway ({stats.underway})
               </Button>
               <Button
-                variant={selectedStatus === 'pending' ? 'default' : 'ghost'}
+                variant={selectedStatus === 'requested' ? 'default' : 'ghost'}
                 size="sm"
                 className="w-full justify-start"
-                onClick={() => setSelectedStatus('pending')}
+                onClick={() => setSelectedStatus('requested')}
               >
                 <AlertCircle className="w-4 h-4 mr-2" />
-                Pending ({stats.pending})
+                Requested ({stats.requested})
               </Button>
               <Button
-                variant={selectedStatus === 'rejected' ? 'default' : 'ghost'}
+                variant={selectedStatus === 'declined' ? 'default' : 'ghost'}
                 size="sm"
                 className="w-full justify-start"
-                onClick={() => setSelectedStatus('rejected')}
+                onClick={() => setSelectedStatus('declined')}
               >
                 <AlertCircle className="w-4 h-4 mr-2" />
-                Rejected ({stats.rejected})
+                Declined ({stats.declined})
               </Button>
             </div>
           </Card>
@@ -303,7 +318,7 @@ export default function UserDashboard() {
                           View
                         </Link>
                       </Button>
-                      {flight.status === 'pending' && (
+                      {flight.status === 'requested' && (
                         <Button asChild variant="outline" size="sm">
                           <Link to={`/request/${flight.id}`}>
                             <Edit className="w-4 h-4 mr-1" />

@@ -29,8 +29,7 @@ CREATE OR REPLACE FUNCTION public.create_flight_request_safe(
   p_platform text DEFAULT NULL,
   p_airline text DEFAULT NULL,
   p_aircraft text DEFAULT NULL,
-  p_notes_public text DEFAULT NULL,
-  p_user_id uuid DEFAULT NULL
+  p_notes_public text DEFAULT NULL
 )
 RETURNS uuid
 LANGUAGE plpgsql
@@ -101,7 +100,7 @@ BEGIN
     1,
     'public',
     'requested',
-    p_user_id
+    auth.uid()
   ) RETURNING id INTO flight_id;
   
   RETURN flight_id;
@@ -231,6 +230,6 @@ $$;
 
 -- Grant execute permissions to authenticated users
 GRANT EXECUTE ON FUNCTION public.check_admin_status(uuid) TO authenticated;
-GRANT EXECUTE ON FUNCTION public.create_flight_request_safe(text, text, text, text, text, text, text, text, text, uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.create_flight_request_safe(text, text, text, text, text, text, text, text, text) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.get_user_flights(uuid) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.update_flight_status_safe(uuid, text, text) TO authenticated;

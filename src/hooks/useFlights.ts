@@ -103,6 +103,7 @@ export function useCreateFlightRequest() {
       // Invalidate and refetch flights
       queryClient.invalidateQueries({ queryKey: ['flights'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['flights', 'user'] });
     },
   });
 }
