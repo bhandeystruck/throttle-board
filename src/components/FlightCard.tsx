@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Plane, Clock, User } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useIsAdmin } from '@/hooks/useAdmin';
 
 interface FlightCardProps {
   flight: FlightRequest;
@@ -17,9 +18,7 @@ interface FlightCardProps {
 
 export function FlightCard({ flight, onUpdate }: FlightCardProps) {
   const { user } = useAuth();
-  
-  // Simple admin check - in a real app, you'd check user roles/permissions
-  const isAdmin = user?.email?.includes('admin') || user?.email?.includes('throttleandflaps') || true;
+  const { isAdmin } = useIsAdmin();
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -44,7 +43,7 @@ export function FlightCard({ flight, onUpdate }: FlightCardProps) {
         {/* Route */}
         <div className="flex items-center gap-3">
           <div className="text-center">
-            <div className="font-mono text-sm font-semibold">{flight.origin_icao}</div>
+            <div className="font-mono text-sm font-semibold">{flight.origin_icao.toUpperCase()}</div>
             <div className="text-xs text-muted-foreground">{flight.origin_city}</div>
           </div>
           
@@ -55,7 +54,7 @@ export function FlightCard({ flight, onUpdate }: FlightCardProps) {
           </div>
 
           <div className="text-center">
-            <div className="font-mono text-sm font-semibold">{flight.destination_icao}</div>
+            <div className="font-mono text-sm font-semibold">{flight.destination_icao.toUpperCase()}</div>
             <div className="text-xs text-muted-foreground">{flight.destination_city}</div>
           </div>
         </div>

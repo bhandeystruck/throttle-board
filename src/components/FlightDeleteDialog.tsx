@@ -23,7 +23,7 @@ export function FlightDeleteDialog({ flight, onDelete }: FlightDeleteDialogProps
       await deleteFlightMutation.mutateAsync(flight.id);
       toast({
         title: "Flight Deleted",
-        description: `Flight request ${flight.origin_icao} → ${flight.destination_icao} has been permanently deleted.`,
+        description: `Flight request ${flight.origin_icao.toUpperCase()} → ${flight.destination_icao.toUpperCase()} has been permanently deleted.`,
       });
       setIsOpen(false);
       onDelete();
@@ -57,7 +57,7 @@ export function FlightDeleteDialog({ flight, onDelete }: FlightDeleteDialogProps
             </p>
             <div className="bg-muted p-3 rounded-md">
               <p className="font-medium text-sm">
-                {flight.origin_icao} → {flight.destination_icao}
+                {flight.origin_icao.toUpperCase()} → {flight.destination_icao.toUpperCase()}
               </p>
               <p className="text-sm text-muted-foreground">
                 Requester: {flight.requester_handle}

@@ -1,167 +1,233 @@
--- Flight Requests Database Schema for Throttle Board
--- Run this in your Supabase SQL Editor
-
--- Create custom types
-CREATE TYPE flight_status AS ENUM (
-  'requested',
-  'queued', 
-  'planning',
-  'underway',
-  'edited',
-  'published',
-  'archived',
-  'declined'
+-- Create user profiles table
+CREATE TABLE public.profiles (
+  id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id uuid NOT NULL UNIQUE REFERENCES auth.users(id) ON DELETE CASCADE,
+  display_name text,
+  avatar_url text,
+  bio text,
+  is_admin boolean DEFAULT false,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
 );
 
-CREATE TYPE platform_type AS ENUM (
-  'tiktok',
-  'instagram', 
-  'youtube',
-  'other'
+-- Create flight requests table
+CREATE TABLE public.flight_requests (
+  id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+  submitted_at timestamptz NOT NULL DEFAULT now(),
+  status text NOT NULL DEFAULT 'requested' CHECK (status IN ('requested', 'queued', 'planning', 'underway', 'edited', 'published', 'archived', 'declined')),
+  requester_handle text NOT NULL,
+  platform text CHECK (platform IN ('tiktok', 'instagram', 'other')),
+  origin_icao text NOT NULL,
+  origin_city text NOT NULL,
+  destination_icao text NOT NULL,
+  destination_city text NOT NULL,
+  airline text,
+  aircraft text,
+  sim text DEFAULT 'MSFS 2024',
+  notes_public text,
+  notes_private text,
+  eta timestamptz,
+  priority integer DEFAULT 0,
+  visibility text DEFAULT 'public' CHECK (visibility IN ('public', 'unlisted', 'private')),
+  published_at timestamptz,
+  created_by uuid REFERENCES auth.users(id) ON DELETE SET NULL,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
 );
 
-CREATE TYPE visibility_type AS ENUM (
-  'public',
-  'unlisted',
-  'private'
+-- Create media links table
+CREATE TABLE public.media_links (
+  id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+  flight_request_id uuid NOT NULL REFERENCES public.flight_requests(id) ON DELETE CASCADE,
+  platform text NOT NULL CHECK (platform IN ('youtube', 'tiktok', 'instagram')),
+  url text NOT NULL,
+  title text,
+  thumbnail_url text,
+  published_at timestamptz,
+  created_at timestamptz NOT NULL DEFAULT now()
 );
 
--- Flight Requests Table
-CREATE TABLE flight_requests (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  submitted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  status flight_status DEFAULT 'requested',
-  requester_handle TEXT NOT NULL,
-  platform platform_type,
-  origin_icao TEXT NOT NULL,
-  origin_city TEXT NOT NULL,
-  destination_icao TEXT NOT NULL,
-  destination_city TEXT NOT NULL,
-  airline TEXT,
-  aircraft TEXT,
-  sim TEXT DEFAULT 'MSFS 2024',
-  notes_public TEXT,
-  notes_private TEXT,
-  eta TIMESTAMP WITH TIME ZONE,
-  priority INTEGER DEFAULT 1 CHECK (priority >= 1 AND priority <= 5),
-  visibility visibility_type DEFAULT 'public',
-  published_at TIMESTAMP WITH TIME ZONE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL
+-- Create status events table for timeline
+CREATE TABLE public.status_events (
+  id uuid NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
+  flight_request_id uuid NOT NULL REFERENCES public.flight_requests(id) ON DELETE CASCADE,
+  from_status text,
+  to_status text NOT NULL,
+  changed_at timestamptz NOT NULL DEFAULT now(),
+  comment text,
+  changed_by uuid REFERENCES auth.users(id) ON DELETE SET NULL
 );
 
--- Media Links Table
-CREATE TABLE media_links (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  flight_request_id UUID REFERENCES flight_requests(id) ON DELETE CASCADE,
-  platform platform_type NOT NULL,
-  url TEXT NOT NULL,
-  title TEXT,
-  thumbnail_url TEXT,
-  published_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+-- Enable Row Level Security
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.flight_requests ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.media_links ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.status_events ENABLE ROW LEVEL SECURITY;
+
+-- RLS Policies for profiles
+CREATE POLICY "Profiles are viewable by everyone" 
+ON public.profiles FOR SELECT 
+USING (true);
+
+CREATE POLICY "Users can update their own profile" 
+ON public.profiles FOR UPDATE 
+USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert their own profile" 
+ON public.profiles FOR INSERT 
+WITH CHECK (auth.uid() = user_id);
+
+-- RLS Policies for flight_requests
+CREATE POLICY "Public flight requests are viewable by everyone" 
+ON public.flight_requests FOR SELECT 
+USING (visibility = 'public');
+
+CREATE POLICY "Admins can view all flight requests" 
+ON public.flight_requests FOR SELECT 
+USING (
+  EXISTS (
+    SELECT 1 FROM public.profiles 
+    WHERE user_id = auth.uid() AND is_admin = true
+  )
 );
 
--- Status Events Table (for tracking status changes)
-CREATE TABLE status_events (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  flight_request_id UUID REFERENCES flight_requests(id) ON DELETE CASCADE,
-  from_status flight_status,
-  to_status flight_status NOT NULL,
-  changed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  comment TEXT,
-  changed_by TEXT NOT NULL,
-  user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL
+CREATE POLICY "Anyone can insert flight requests" 
+ON public.flight_requests FOR INSERT 
+WITH CHECK (true);
+
+CREATE POLICY "Admins can update flight requests" 
+ON public.flight_requests FOR UPDATE 
+USING (
+  EXISTS (
+    SELECT 1 FROM public.profiles 
+    WHERE user_id = auth.uid() AND is_admin = true
+  )
 );
 
--- Create indexes for better performance
-CREATE INDEX idx_flight_requests_status ON flight_requests(status);
-CREATE INDEX idx_flight_requests_submitted_at ON flight_requests(submitted_at);
-CREATE INDEX idx_flight_requests_visibility ON flight_requests(visibility);
-CREATE INDEX idx_flight_requests_user_id ON flight_requests(user_id);
-CREATE INDEX idx_media_links_flight_request_id ON media_links(flight_request_id);
-CREATE INDEX idx_status_events_flight_request_id ON status_events(flight_request_id);
+CREATE POLICY "Admins can delete flight requests" 
+ON public.flight_requests FOR DELETE 
+USING (
+  EXISTS (
+    SELECT 1 FROM public.profiles 
+    WHERE user_id = auth.uid() AND is_admin = true
+  )
+);
 
--- Create updated_at trigger function
-CREATE OR REPLACE FUNCTION update_updated_at_column()
+-- RLS Policies for media_links
+CREATE POLICY "Media links are viewable with their flight requests" 
+ON public.media_links FOR SELECT 
+USING (
+  EXISTS (
+    SELECT 1 FROM public.flight_requests fr 
+    WHERE fr.id = flight_request_id AND fr.visibility = 'public'
+  )
+  OR
+  EXISTS (
+    SELECT 1 FROM public.profiles 
+    WHERE user_id = auth.uid() AND is_admin = true
+  )
+);
+
+CREATE POLICY "Admins can manage media links" 
+ON public.media_links FOR ALL 
+USING (
+  EXISTS (
+    SELECT 1 FROM public.profiles 
+    WHERE user_id = auth.uid() AND is_admin = true
+  )
+);
+
+-- RLS Policies for status_events
+CREATE POLICY "Status events are viewable with their flight requests" 
+ON public.status_events FOR SELECT 
+USING (
+  EXISTS (
+    SELECT 1 FROM public.flight_requests fr 
+    WHERE fr.id = flight_request_id AND fr.visibility = 'public'
+  )
+  OR
+  EXISTS (
+    SELECT 1 FROM public.profiles 
+    WHERE user_id = auth.uid() AND is_admin = true
+  )
+);
+
+CREATE POLICY "Admins can create status events" 
+ON public.status_events FOR INSERT 
+WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM public.profiles 
+    WHERE user_id = auth.uid() AND is_admin = true
+  )
+);
+
+-- Create function to automatically create profile on user signup
+CREATE OR REPLACE FUNCTION public.handle_new_user() 
+RETURNS trigger 
+LANGUAGE plpgsql 
+SECURITY DEFINER 
+SET search_path = public
+AS $$
+BEGIN
+  INSERT INTO public.profiles (user_id, display_name)
+  VALUES (
+    NEW.id, 
+    COALESCE(NEW.raw_user_meta_data->>'display_name', NEW.email)
+  );
+  RETURN NEW;
+END;
+$$;
+
+
+-- Create function to update timestamps
+CREATE OR REPLACE FUNCTION public.update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
-    NEW.updated_at = NOW();
-    RETURN NEW;
+  NEW.updated_at = now();
+  RETURN NEW;
 END;
-$$ language 'plpgsql';
+$$ LANGUAGE plpgsql SET search_path = public;
 
--- Create triggers for updated_at
-CREATE TRIGGER update_flight_requests_updated_at 
-  BEFORE UPDATE ON flight_requests 
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+-- Add triggers for timestamp updates
+CREATE TRIGGER update_profiles_updated_at
+  BEFORE UPDATE ON public.profiles
+  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
--- Row Level Security (RLS) Policies
-ALTER TABLE flight_requests ENABLE ROW LEVEL SECURITY;
-ALTER TABLE media_links ENABLE ROW LEVEL SECURITY;
-ALTER TABLE status_events ENABLE ROW LEVEL SECURITY;
+CREATE TRIGGER update_flight_requests_updated_at
+  BEFORE UPDATE ON public.flight_requests
+  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
--- Public flight requests are visible to everyone
-CREATE POLICY "Public flight requests are viewable by everyone" ON flight_requests
-  FOR SELECT USING (visibility = 'public');
+-- Create function to automatically create status event on status change
+CREATE OR REPLACE FUNCTION public.handle_status_change()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  IF OLD.status IS DISTINCT FROM NEW.status THEN
+    INSERT INTO public.status_events (flight_request_id, from_status, to_status, changed_by)
+    VALUES (NEW.id, OLD.status, NEW.status, auth.uid());
+  END IF;
+  RETURN NEW;
+END;
+$$;
 
--- Users can view their own flight requests
-CREATE POLICY "Users can view own flight requests" ON flight_requests
-  FOR SELECT USING (auth.uid() = user_id);
+-- Trigger to create status event on flight request update
+CREATE TRIGGER on_flight_request_status_change
+  AFTER UPDATE ON public.flight_requests
+  FOR EACH ROW EXECUTE FUNCTION public.handle_status_change();
 
--- Users can insert their own flight requests
-CREATE POLICY "Users can insert own flight requests" ON flight_requests
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
-
--- Users can update their own flight requests
-CREATE POLICY "Users can update own flight requests" ON flight_requests
-  FOR UPDATE USING (auth.uid() = user_id);
-
--- Admins can do everything (you'll need to implement admin role check)
-CREATE POLICY "Admins can do everything" ON flight_requests
-  FOR ALL USING (
-    EXISTS (
-      SELECT 1 FROM auth.users 
-      WHERE auth.users.id = auth.uid() 
-      AND auth.users.email LIKE '%admin%'
-    )
-  );
-
--- Similar policies for media_links
-CREATE POLICY "Media links are viewable by everyone" ON media_links
-  FOR SELECT USING (true);
-
-CREATE POLICY "Admins can manage media links" ON media_links
-  FOR ALL USING (
-    EXISTS (
-      SELECT 1 FROM auth.users 
-      WHERE auth.users.id = auth.uid() 
-      AND auth.users.email LIKE '%admin%'
-    )
-  );
-
--- Similar policies for status_events
-CREATE POLICY "Status events are viewable by everyone" ON status_events
-  FOR SELECT USING (true);
-
-CREATE POLICY "Admins can manage status events" ON status_events
-  FOR ALL USING (
-    EXISTS (
-      SELECT 1 FROM auth.users 
-      WHERE auth.users.id = auth.uid() 
-      AND auth.users.email LIKE '%admin%'
-    )
-  );
-
--- Insert some sample data (optional)
-INSERT INTO flight_requests (
-  requester_handle, platform, origin_icao, origin_city, 
-  destination_icao, destination_city, airline, aircraft, 
-  notes_public, priority, status, visibility
+-- Insert seed data
+INSERT INTO public.flight_requests (
+  requester_handle, platform, origin_icao, origin_city, destination_icao, destination_city,
+  airline, aircraft, status, notes_public
 ) VALUES 
-  ('@avi8r_nikos', 'tiktok', 'LGAV', 'Athens', 'LGTS', 'Thessaloniki', 'Aegean Airlines', 'Airbus A320', 'Love to see the beautiful Greek islands approach!', 5, 'published', 'public'),
-  ('@flysim_dubai', 'instagram', 'OMDB', 'Dubai', 'OLBA', 'Beirut', 'Emirates', 'Boeing 777-300ER', 'Excited to see the Middle East scenery!', 4, 'underway', 'public'),
-  ('@aviation_canada', 'youtube', 'CYVR', 'Vancouver', 'CYVR', 'Vancouver', NULL, 'Boeing 737-800', 'ILS approach to runway 26L please! Weather permitting.', 3, 'planning', 'public'),
-  ('@jetblue_fan', 'tiktok', 'KPVD', 'Providence', 'KTPA', 'Tampa', 'JetBlue Airways', 'Airbus A320', 'First time requesting! Love your content!', 2, 'queued', 'public'),
-  ('@nz_aviation', NULL, 'NZQN', 'Queenstown', 'NZQN', 'Queenstown', NULL, 'Airbus A320', 'RNAV approach with those stunning mountains!', 1, 'requested', 'public');
+  ('@avi8r_nikos', 'tiktok', 'LGAV', 'Athens', 'LGTS', 'Thessaloniki', 'Aegean Airlines', 'Airbus A320', 'published', 'Beautiful Greek islands approach!'),
+  ('@pilot_sarah', 'instagram', 'OMDB', 'Dubai', 'OLBA', 'Beirut', 'Emirates', 'Boeing 777', 'planning', 'Night flight over the desert'),
+  ('@flightsimlover', 'tiktok', 'CYVR', 'Vancouver', 'CYVR', 'Vancouver', 'Air Canada', 'Boeing 737', 'underway', 'ILS approach to 26L'),
+  ('@aviationgeek', 'instagram', 'KPVD', 'Providence', 'KTPA', 'Tampa', 'JetBlue', 'Airbus A320', 'edited', 'East coast to Florida sunshine'),
+  ('@msfs_pilot', 'tiktok', 'NZQN', 'Queenstown', 'NZCH', 'Christchurch', 'Air New Zealand', 'Airbus A320', 'queued', 'Stunning New Zealand scenery'),
+  ('@sim_captain', 'instagram', 'EGLL', 'London Heathrow', 'KJFK', 'New York JFK', 'British Airways', 'Boeing 747', 'requested', 'Classic transatlantic route'),
+  ('@virtual_wings', 'tiktok', 'RJAA', 'Narita', 'KLAX', 'Los Angeles', 'JAL', 'Boeing 787', 'declined', 'Long haul over the Pacific'),
+  ('@sky_explorer', 'instagram', 'ZBAA', 'Beijing', 'WSSS', 'Singapore', 'Singapore Airlines', 'Airbus A350', 'archived', 'Asian hub connection');
