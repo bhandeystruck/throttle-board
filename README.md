@@ -6,7 +6,10 @@
 
 **A full-stack web application for managing flight simulation content requests**
 
-[🌐 Live Demo](https://throttleandflaps.com) • [📱 Website](https://throttleandflaps.com) • [🐦 Twitter](https://twitter.com/throttleandflaps)
+
+
+[📱 Website](https://throttleandflaps.com)
+
 
 </div>
 
@@ -14,7 +17,7 @@
 
 ## 🚀 Project Overview
 
-**Throttle Board** is a comprehensive flight request management system built for **@ThrottleAndFlaps**, a Microsoft Flight Simulator content creator. The platform enables community members to submit flight requests that are tracked through a complete workflow from submission to content publication.
+**Throttle Board** is a comprehensive flight request management system built for **@ThrottleAndFlaps**, my Microsoft Flight Simulator content creator account. The platform enables community members to submit flight requests that are tracked through a complete workflow from submission to content publication.
 
 ### 🎯 Key Features
 
@@ -249,3 +252,4 @@ This project is proprietary software developed for @ThrottleAndFlaps. All rights
 *Showcasing modern web development practices and full-stack expertise*
 
 </div>
+
