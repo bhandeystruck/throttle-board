@@ -45,16 +45,54 @@ export class FlightService {
     return data;
   }
 
-  // Create a new flight request
+  // Create a new flight request using secure RPC function
   static async createFlightRequest(flightData: FlightRequestInsert) {
-    const { data, error } = await supabase
+    if (process.env.NODE_ENV === 'development') {
+      console.log('createFlightRequest called with data:', flightData);
+    }
+
+    const { data: flightId, error } = await (supabase as any).rpc('create_flight_request_safe', {
+      p_requester_handle: flightData.requester_handle,
+      p_origin_icao: flightData.origin_icao,
+      p_origin_city: flightData.origin_city,
+      p_destination_icao: flightData.destination_icao,
+      p_destination_city: flightData.destination_city,
+      p_platform: flightData.platform,
+      p_airline: flightData.airline,
+      p_aircraft: flightData.aircraft,
+      p_notes_public: flightData.notes_public
+    });
+
+    if (error) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error('createFlightRequest error:', error);
+      }
+      throw error;
+    }
+
+    if (process.env.NODE_ENV === 'development') {
+      console.log('createFlightRequest result - flightId:', flightId);
+    }
+
+    // Fetch the complete flight object
+    const { data: flight, error: fetchError } = await supabase
       .from('flight_requests')
-      .insert(flightData as any)
-      .select()
+      .select('*')
+      .eq('id', flightId)
       .single();
 
-    if (error) throw error;
-    return data;
+    if (fetchError) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error fetching created flight:', fetchError);
+      }
+      throw fetchError;
+    }
+
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Created flight object:', flight);
+    }
+
+    return flight;
   }
 
   // Update flight request status
@@ -152,13 +190,27 @@ export class FlightService {
 
   // Get user's flight requests
   static async getUserFlights(userId: string) {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('getUserFlights called with userId:', userId);
+    }
+
     const { data, error } = await supabase
       .from('flight_requests')
       .select('*')
       .eq('user_id', userId)
       .order('submitted_at', { ascending: false });
 
-    if (error) throw error;
+    if (error) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error('getUserFlights error:', error);
+      }
+      throw error;
+    }
+
+    if (process.env.NODE_ENV === 'development') {
+      console.log('getUserFlights result:', { data, count: data?.length });
+    }
+
     return data;
   }
 
