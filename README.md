@@ -6,7 +6,7 @@
 
 **A full-stack web application for managing flight simulation content requests**
 
-[🌐 Live Demo](https://throttleandflaps.com) • [📱 Website](https://throttleandflaps.com) • [🐦 Twitter](https://twitter.com/throttleandflaps)
+[📱 Website](https://throttleandflaps.com)
 
 </div>
 
