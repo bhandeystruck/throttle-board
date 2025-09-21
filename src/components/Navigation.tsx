@@ -25,24 +25,33 @@ export function Navigation() {
 
   const handleSignOut = async () => {
     try {
-      console.log('Attempting to sign out...');
       await signOut();
-      console.log('Sign out successful');
     } catch (error) {
-      console.error('Failed to sign out:', error);
-      console.error('Error details:', {
-        message: error?.message,
-        code: error?.code,
-        status: error?.status,
-        statusCode: error?.statusCode
-      });
+      // Only log in development
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Sign out failed:', error);
+      }
       
       // Force clear local storage if sign out fails
       try {
-        localStorage.removeItem('sb-' + import.meta.env.VITE_SUPABASE_URL?.split('//')[1]?.split('.')[0] + '-auth-token');
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        if (supabaseUrl) {
+          const projectId = supabaseUrl.split('//')[1]?.split('.')[0];
+          if (projectId) {
+            localStorage.removeItem(`sb-${projectId}-auth-token`);
+          }
+        }
+        // Clear all auth-related localStorage items
+        Object.keys(localStorage).forEach(key => {
+          if (key.includes('supabase') && key.includes('auth')) {
+            localStorage.removeItem(key);
+          }
+        });
         window.location.reload();
       } catch (storageError) {
-        console.error('Failed to clear storage:', storageError);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Failed to clear storage:', storageError);
+        }
       }
     }
   };
