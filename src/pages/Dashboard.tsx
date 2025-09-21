@@ -9,6 +9,7 @@ import { Database } from '@/integrations/supabase/types';
 import { useAuth } from '@/hooks/useAuth';
 import { useAllFlightsForAdmin, useDashboardStats } from '@/hooks/useFlights';
 import { useIsAdmin } from '@/hooks/useAdmin';
+import { Navigate } from 'react-router-dom';
 
 type FlightStatus = Database['public']['Tables']['flight_requests']['Row']['status'];
 import { 
@@ -29,6 +30,11 @@ export default function Dashboard() {
   const [selectedStatus, setSelectedStatus] = useState<FlightStatus | 'all'>('all');
   const { user, signOut } = useAuth();
   const { isAdmin, isLoading: adminLoading } = useIsAdmin();
+
+  // Redirect non-admin users to their personal dashboard
+  if (!adminLoading && !isAdmin) {
+    return <Navigate to="/my-dashboard" replace />;
+  }
 
   // Fetch flights and stats using React Query
   const { data: flights = [], isLoading, error, refetch } = useAllFlightsForAdmin();

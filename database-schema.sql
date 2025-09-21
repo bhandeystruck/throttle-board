@@ -31,6 +31,7 @@ CREATE TABLE public.flight_requests (
   visibility text DEFAULT 'public' CHECK (visibility IN ('public', 'unlisted', 'private')),
   published_at timestamptz,
   created_by uuid REFERENCES auth.users(id) ON DELETE SET NULL,
+  user_id uuid REFERENCES auth.users(id) ON DELETE SET NULL,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
@@ -112,6 +113,14 @@ USING (
     WHERE user_id = auth.uid() AND is_admin = true
   )
 );
+
+CREATE POLICY "Users can view their own flight requests" 
+ON public.flight_requests FOR SELECT 
+USING (user_id = auth.uid());
+
+CREATE POLICY "Users can update their own flight requests" 
+ON public.flight_requests FOR UPDATE 
+USING (user_id = auth.uid());
 
 -- RLS Policies for media_links
 CREATE POLICY "Media links are viewable with their flight requests" 
@@ -218,16 +227,3 @@ CREATE TRIGGER on_flight_request_status_change
   AFTER UPDATE ON public.flight_requests
   FOR EACH ROW EXECUTE FUNCTION public.handle_status_change();
 
--- Insert seed data
-INSERT INTO public.flight_requests (
-  requester_handle, platform, origin_icao, origin_city, destination_icao, destination_city,
-  airline, aircraft, status, notes_public
-) VALUES 
-  ('@avi8r_nikos', 'tiktok', 'LGAV', 'Athens', 'LGTS', 'Thessaloniki', 'Aegean Airlines', 'Airbus A320', 'published', 'Beautiful Greek islands approach!'),
-  ('@pilot_sarah', 'instagram', 'OMDB', 'Dubai', 'OLBA', 'Beirut', 'Emirates', 'Boeing 777', 'planning', 'Night flight over the desert'),
-  ('@flightsimlover', 'tiktok', 'CYVR', 'Vancouver', 'CYVR', 'Vancouver', 'Air Canada', 'Boeing 737', 'underway', 'ILS approach to 26L'),
-  ('@aviationgeek', 'instagram', 'KPVD', 'Providence', 'KTPA', 'Tampa', 'JetBlue', 'Airbus A320', 'edited', 'East coast to Florida sunshine'),
-  ('@msfs_pilot', 'tiktok', 'NZQN', 'Queenstown', 'NZCH', 'Christchurch', 'Air New Zealand', 'Airbus A320', 'queued', 'Stunning New Zealand scenery'),
-  ('@sim_captain', 'instagram', 'EGLL', 'London Heathrow', 'KJFK', 'New York JFK', 'British Airways', 'Boeing 747', 'requested', 'Classic transatlantic route'),
-  ('@virtual_wings', 'tiktok', 'RJAA', 'Narita', 'KLAX', 'Los Angeles', 'JAL', 'Boeing 787', 'declined', 'Long haul over the Pacific'),
-  ('@sky_explorer', 'instagram', 'ZBAA', 'Beijing', 'WSSS', 'Singapore', 'Singapore Airlines', 'Airbus A350', 'archived', 'Asian hub connection');

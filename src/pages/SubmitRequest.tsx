@@ -285,7 +285,15 @@ export default function SubmitRequest() {
           {/* Terms */}
           <p className="text-xs text-muted-foreground text-center">
             By submitting this request, you agree that your flight details and handle may be featured 
-            in @ThrottleAndFlaps content across social media platforms.
+            in @ThrottleAndFlaps content across social media platforms. View our{' '}
+            <Link to="/terms" className="text-primary hover:underline">
+              Terms of Service
+            </Link>
+            {' '}and{' '}
+            <Link to="/privacy" className="text-primary hover:underline">
+              Privacy Policy
+            </Link>
+            {' '}for more information.
           </p>
           
           {/* Social Media Links */}

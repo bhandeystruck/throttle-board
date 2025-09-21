@@ -88,7 +88,7 @@ export class FlightService {
           from_status: currentFlight.status as any,
           to_status: status as any,
           comment: comment || `Status changed to ${status}`,
-          changed_by: 'admin'
+          changed_by: null // This should be set to the actual admin user ID
         } as any);
     }
 
@@ -193,7 +193,7 @@ export class FlightService {
           from_status: currentFlight.status as any,
           to_status: updateData.status as any,
           comment: `Flight details updated and status changed to ${updateData.status}`,
-          changed_by: 'admin'
+          changed_by: null // This should be set to the actual admin user ID
         } as any);
     }
 
